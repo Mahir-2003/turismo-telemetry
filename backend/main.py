@@ -4,7 +4,7 @@ from loguru import logger
 import uvicorn
 
 # from telemetry.reader import TelemetryReader
-from telemetry.models import TelemetryConnection
+from telemetry.reader import TelemetryReader
 
 app = FastAPI(title="GT7 Telemetry Server")
 
@@ -31,7 +31,7 @@ async def websocket_endpoint(websocket: WebSocket):
         ps_ip = data.strip()
 
         # initialize the telemetry connection
-        telemetry = TelemetryConnection(ps_ip)
+        telemetry = TelemetryReader(ps_ip)
         logger.info(f"New telemetry connection established with PlayStation IP: {ps_ip}")
 
         # start telemetry reading loop
