@@ -6,9 +6,9 @@ import uvicorn
 import asyncio
 from datetime import datetime
 
-from telemetry.reader import TelemetryReader
-from app_config.config import settings
-from app_config.validators import validate_ps_ip
+from backend.telemetry.reader import TelemetryReader
+from backend.app_config.config import settings
+from backend.app_config.validators import validate_ps_ip
 
 app = FastAPI(
     title="GT7 Telemetry Server",
