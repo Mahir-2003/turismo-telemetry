@@ -1,6 +1,7 @@
 # GT7 Web Telemetry
 
 Real-time telemetry dashboard for Gran Turismo 7 using WebSocket, Python and React.
+Still very much work in progress! None of the below is implemented as of 12/28/24
 
 ## Features
 
