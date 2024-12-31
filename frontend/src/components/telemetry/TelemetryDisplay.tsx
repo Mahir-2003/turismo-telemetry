@@ -15,6 +15,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const speedKph = (data.speed_mps * 3.6).toFixed(1);
     const throttlePercent = ((data.throttle / 255) * 100).toFixed(1);
     const brakePercent = ((data.brake / 255) * 100).toFixed(1);
+    const suggestedGear = data.suggested_gear !== 15 ? data.suggested_gear : null;
 
     return (
         <Card className="w-full max-w-4xl mx-auto mt-4">
@@ -32,11 +33,11 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                     </div>
                     <div className="space-y-1">
                         <p className="text-sm font-medium">RPM</p>
-                        <p className="text-2xl font-bold">{Math.round(data.engineRpm)}</p>
+                        <p className="text-2xl font-bold">{Math.round(data.engine_rpm)}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-sm font-medium">Gear</p>
-                        <p className="text-2xl font-bold">{data.currentGear}</p>
+                        <p className="text-sm font-medium">Suggested Gear</p>
+                        <p className="text-2xl font-bold">{suggestedGear !== null ? suggestedGear : 'N/A'}</p>
                     </div>
                     <div className="space-y-1">
                         <p className="text-sm font-medium">Throttle</p>
@@ -47,9 +48,13 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                         <p className="text-2xl font-bold">{brakePercent}%</p>
                     </div>
                     <div className="space-y-1">
+                        <p className="text-sm font-medium">Gear</p>
+                        <p className="text-2xl font-bold">{data.current_gear}</p>
+                    </div>
+                    <div className="space-y-1">
                         <p className="text-sm font-medium">Best Lap</p>
                         <p className="text-2xl font-bold">
-                        {data.bestLapTime > 0 ? (data.bestLapTime / 1000).toFixed(3) : '--:--'}
+                        {data.best_lap_time > 0 ? (data.best_lap_time / 1000).toFixed(3) : '--:--'}
                         </p>
                     </div>
                 </div>

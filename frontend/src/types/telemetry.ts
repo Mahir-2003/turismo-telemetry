@@ -5,19 +5,19 @@ export interface Vector3 {
   }
   
   export enum SimulatorFlags {
-    None = 0,
-    CarOnTrack = 1 << 0,
-    Paused = 1 << 1, // simulation will not be paused in online modes
-    LoadingOrProcessing = 1 << 2,
-    InGear = 1 << 3,
-    HasTurbo = 1 << 4,
-    RevLimiterBlinkAlertActive = 1 << 5,
-    HandBrakeActive = 1 << 6,
-    LightsActive = 1 << 7,
-    HighBeamActive = 1 << 8,
-    LowBeamActive = 1 << 9,
-    ASMActive = 1 << 10,
-    TCSActive = 1 << 11,
+    NONE = 0,
+    CAR_ON_TRACK = 1 << 0,
+    PAUSED = 1 << 1, // simulation will not be paused in online modes
+    LOADING = 1 << 2,
+    IN_GEAR = 1 << 3,
+    HAS_TURBO = 1 << 4,
+    REV_LIMITER = 1 << 5,
+    HANDBRAKE = 1 << 6,
+    LIGHTS = 1 << 7,
+    HIGH_BEAM = 1 << 8,
+    LOW_BEAM = 1 << 9,
+    ASM_ACTIVE = 1 << 10,
+    TCS_ACTIVE = 1 << 11,
   }
   
   export interface TelemetryPacket {
@@ -25,67 +25,73 @@ export interface Vector3 {
     position: Vector3;           // Track position in meters
     velocity: Vector3;           // Velocity in track units (meters)
     rotation: Vector3;          // Rotation (Pitch/Yaw/Roll) from -1 to 1
-    relativeOrientationToNorth: number;  // 1.0 is north, 0.0 is south
-    angularVelocity: Vector3;   // Car rotation speed in radians/second
-    bodyHeight: number;         // Height of car body
+    rel_orientation_to_north: number;  // 1.0 is north, 0.0 is south
+    angular_velocity: Vector3;   // Car rotation speed in radians/second
+    body_height: number;         // Height of car body
   
     // Engine and Performance
-    engineRpm: number;          // Current RPM
-    gasLevel: number;          // Current gas level in liters, from 0 to gasCapacity
-    gasCapacity: number;       // Maximum gas capacity (100 for most cars, 5 for karts, 0 for electric cars)
+    engine_rpm: number;          // Current RPM
+    gas_level: number;          // Current gas level in liters, from 0 to gasCapacity
+    gas_capacity: number;       // Maximum gas capacity (100 for most cars, 5 for karts, 0 for electric cars)
     speed_mps: number;          // Speed in meters per second (m/s)
-    turboBoost: number;        // Turbo boost (below 1.0 is below 0 ingame, so 2.0 = 1 x 100kPa)
-    oilPressure: number;       // Oil pressure in bars
-    waterTemp: number;         // Water temperature
-    oilTemp: number;           // Oil temperature
+    turbo_boost: number;        // Turbo boost (below 1.0 is below 0 ingame, so 2.0 = 1 x 100kPa)
+    oil_pressure: number;       // Oil pressure in bars
+    water_temp: number;         // Water temperature
+    oil_temp: number;           // Oil temperature
   
     // Tire Data Surface Temperature
-    tireTemp: {
-      frontLeft: number;      // Temperature in Celsius
-      frontRight: number;
-      rearLeft: number;
-      rearRight: number;
-    };
-    
-    // Tire Additional Data
-    wheelRevs: {              // Revolutions per second in radians
-      frontLeft: number;
-      frontRight: number;
-      rearLeft: number;
-      rearRight: number;
-    };
-    
-    tireRadius: {             // Tire radius in meters
-      frontLeft: number;
-      frontRight: number;
-      rearLeft: number;
-      rearRight: number;
-    };
-    
-    suspensionHeight: {
-      frontLeft: number;
-      frontRight: number;
-      rearLeft: number;
-      rearRight: number;
-    };
-  
+    // Temperature in Celsius
+    tire_temp_fl: number
+    tire_temp_fr: number
+    tire_temp_rl: number
+    tire_temp_rr: number
+
+    /* Not yet implemented in models.py, update models.py to use
+    this data, and check https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacket.cs
+    to see what's available
+     */
+    // // Tire Additional Data
+    // // Revolutions per second in radians
+    // wheelRevs: {
+    //   frontLeft: number;
+    //   frontRight: number;
+    //   rearLeft: number;
+    //   rearRight: number;
+    // };
+    //
+    // tireRadius: {             // Tire radius in meters
+    //   frontLeft: number;
+    //   frontRight: number;
+    //   rearLeft: number;
+    //   rearRight: number;
+    // };
+    //
+    // suspensionHeight: {
+    //   frontLeft: number;
+    //   frontRight: number;
+    //   rearLeft: number;
+    //   rearRight: number;
+    // };
+    //
     // Race Information
-    packetId: number;         // Packet identifier
-    lapCount: number;
-    lapsInRace: number;       // Laps to finish
-    bestLapTime: number;      // In milliseconds
-    lastLapTime: number;      // In milliseconds
-    timeOfDayProgression: number;  // Current time of day
+    // check and update models.py before using some of the below
+    // variables, i.e: lapCount, not in TelemetryPacket
+    packet_id: number;         // Packet identifier
+    lap_count: number;
+    laps_in_race: number;       // Laps to finish
+    best_lap_time: number;      // In milliseconds
+    last_lap_time: number;      // In milliseconds
+    time_of_day: number;  // Current time of day
     preRaceStartPosition: number;
     numCarsAtPreRace: number;
     
     // Car Control
-    minAlertRpm: number;
-    maxAlertRpm: number;
-    calculatedMaxSpeed: number; // Max possible speed achievable with current transmission settings
+    min_alert_rpm: number;
+    max_alert_rpm: number;
+    calculate_max_speed: number; // Max possible speed achievable with current transmission settings
     flags: SimulatorFlags;
-    currentGear: number;
-    suggestedGear: number;
+    current_gear: number;
+    suggested_gear: number;
     throttle: number;         // 0-255
     brake: number;           // 0-255
   
@@ -94,11 +100,11 @@ export interface Vector3 {
     roadPlaneDistance: number;
   
     // Transmission
-    clutchPedal: number;      // 0.0 to 1.0
-    clutchEngagement: number; // 0.0 to 1.0
-    rpmFromClutchToGearbox: number;
-    transmissionTopSpeed: number;
-    gearRatios: number[];     // Array of gear ratios
-    carCode: number;          // Internal car identifier
+    clutch_pedal: number;      // 0.0 to 1.0
+    clutch_engagement: number; // 0.0 to 1.0
+    rpm_after_clutch: number;
+    transmission_top_speed: number;
+    gear_ratios: number[];     // Array of gear ratios
+    car_code: number;          // Internal car identifier
   }
   
