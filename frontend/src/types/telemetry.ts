@@ -81,6 +81,7 @@ export interface Vector3 {
     laps_in_race: number;       // Laps to finish
     best_lap_time: number;      // In milliseconds
     last_lap_time: number;      // In milliseconds
+    current_lap_time: number;
     time_of_day: number;  // Current time of day
     preRaceStartPosition: number;
     numCarsAtPreRace: number;

@@ -70,5 +70,10 @@ class TelemetryPacket(BaseModel):
     transmission_top_speed: float
     gear_ratios: List[float]
 
+    # Lap Times
+    best_lap_time: int
+    last_lap_time: int
+    current_lap_time: int
+
     # Car identification
     car_code: int

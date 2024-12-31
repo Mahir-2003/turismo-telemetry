@@ -1,5 +1,7 @@
 # Telemetry Data Parser
 import struct
+from datetime import datetime
+
 from loguru import logger
 from .models import TelemetryPacket, Vector3
 
@@ -10,6 +12,17 @@ class TelemetryParser:
     def parse(self, data: bytes) -> TelemetryPacket:
         """Parse binary telemetry data into TelemetryPacket model."""
         try:
+            previous_lap = -1
+            current_lap = struct.unpack('h', data[0x74:0x74 + 2])[0]
+            if current_lap > 0:
+                dt_now = datetime.now()
+                if current_lap != previous_lap:
+                    previous_lap = current_lap
+                    dt_start = dt_now
+                current_lap_time = dt_now - dt_start
+            else:
+                current_lap_time = 0
+
             return TelemetryPacket(
                 # Basic packet info
                 packet_id=struct.unpack('i', data[0x70:0x74])[0],
@@ -56,6 +69,11 @@ class TelemetryParser:
                 tire_temp_rl=struct.unpack('f', data[0x68:0x6C])[0],
                 tire_temp_rr=struct.unpack('f', data[0x6C:0x70])[0],
 
+                # Lap Times
+                best_lap_time=struct.unpack('f', data[0x78:0x78 + 4])[0],
+                last_lap_time=struct.unpack('f', data[0x7C:0x7C + 4])[0],
+                current_lap_time=current_lap_time,
+
                 # Transmission and control
                 current_gear=struct.unpack('B', data[0x90:0x91])[0] & 0b00001111,
                 suggested_gear=struct.unpack('B', data[0x90:0x91])[0] >> 4,
@@ -68,6 +86,7 @@ class TelemetryParser:
                 clutch_engagement=struct.unpack('f', data[0xF8:0xFC])[0],
                 rpm_after_clutch=struct.unpack('f', data[0xFC:0x100])[0],
                 transmission_top_speed=float(struct.unpack('h', data[0x8C:0x8E])[0]),
+
 
                 # Gear ratios array
                 gear_ratios=[
