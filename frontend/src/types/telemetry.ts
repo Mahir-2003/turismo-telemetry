@@ -33,7 +33,7 @@ export interface Vector3 {
     engineRpm: number;          // Current RPM
     gasLevel: number;          // Current gas level in liters, from 0 to gasCapacity
     gasCapacity: number;       // Maximum gas capacity (100 for most cars, 5 for karts, 0 for electric cars)
-    speedMps: number;          // Speed in meters per second (m/s)
+    speed_mps: number;          // Speed in meters per second (m/s)
     turboBoost: number;        // Turbo boost (below 1.0 is below 0 ingame, so 2.0 = 1 x 100kPa)
     oilPressure: number;       // Oil pressure in bars
     waterTemp: number;         // Water temperature

@@ -1,7 +1,7 @@
 # Telemetry Data Parser
 import struct
 from loguru import logger
-from backend.telemetry.models import TelemetryPacket, Vector3
+from .models import TelemetryPacket, Vector3
 
 
 class TelemetryParser:

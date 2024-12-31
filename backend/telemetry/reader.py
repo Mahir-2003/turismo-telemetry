@@ -5,8 +5,8 @@ from typing import AsyncGenerator
 from loguru import logger
 from salsa20 import Salsa20_xor
 
-from backend.telemetry.parser import TelemetryParser
-from backend.telemetry.models import TelemetryPacket
+from .parser import TelemetryParser
+from .models import TelemetryPacket
 
 
 class TelemetryReader:
