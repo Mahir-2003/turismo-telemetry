@@ -77,11 +77,6 @@ export interface Vector3 {
     // check and update models.py before using some of the below
     // variables, i.e: lapCount, not in TelemetryPacket
     packet_id: number;         // Packet identifier
-    lap_count: number;
-    laps_in_race: number;       // Laps to finish
-    best_lap_time: number;      // In milliseconds
-    last_lap_time: number;      // In milliseconds
-    current_lap_time: number;
     time_of_day: number;  // Current time of day
     preRaceStartPosition: number;
     numCarsAtPreRace: number;
@@ -106,6 +101,14 @@ export interface Vector3 {
     rpm_after_clutch: number;
     transmission_top_speed: number;
     gear_ratios: number[];     // Array of gear ratios
+
+    // Lap Information
+    // lap_count: number;
+    best_lap_time: number;      // In milliseconds
+    last_lap_time: number;      // In milliseconds
+    current_lap: number;
+
+    // Car Code
     car_code: number;          // Internal car identifier
   }
   

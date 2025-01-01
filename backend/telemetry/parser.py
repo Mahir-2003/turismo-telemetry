@@ -12,16 +12,16 @@ class TelemetryParser:
     def parse(self, data: bytes) -> TelemetryPacket:
         """Parse binary telemetry data into TelemetryPacket model."""
         try:
-            previous_lap = -1
-            current_lap = struct.unpack('h', data[0x74:0x74 + 2])[0]
-            if current_lap > 0:
-                dt_now = datetime.now()
-                if current_lap != previous_lap:
-                    previous_lap = current_lap
-                    dt_start = dt_now
-                current_lap_time = dt_now - dt_start
-            else:
-                current_lap_time = 0
+            # previous_lap = -1
+            # current_lap = struct.unpack('h', data[0x74:0x74 + 2])[0]
+            # if current_lap > 0:
+            #     dt_now = datetime.now()
+            #     if current_lap != previous_lap:
+            #         previous_lap = current_lap
+            #         dt_start = dt_now
+            #     current_lap_time = dt_now - dt_start
+            # else:
+            #     current_lap_time = 0
 
             return TelemetryPacket(
                 # Basic packet info
@@ -69,10 +69,10 @@ class TelemetryParser:
                 tire_temp_rl=struct.unpack('f', data[0x68:0x6C])[0],
                 tire_temp_rr=struct.unpack('f', data[0x6C:0x70])[0],
 
-                # Lap Times
-                best_lap_time=struct.unpack('f', data[0x78:0x78 + 4])[0],
-                last_lap_time=struct.unpack('f', data[0x7C:0x7C + 4])[0],
-                current_lap_time=current_lap_time,
+                # Lap Information
+                best_lap_time=max(struct.unpack('i', data[0x78:0x78 + 4])[0], 0),  # In milliseconds, -1 means no time
+                last_lap_time=max(struct.unpack('i', data[0x7C:0x7C + 4])[0], 0),  # In milliseconds, -1 means no time
+                current_lap=struct.unpack('h', data[0x74:0x74 + 2])[0],  # Current lap number
 
                 # Transmission and control
                 current_gear=struct.unpack('B', data[0x90:0x91])[0] & 0b00001111,

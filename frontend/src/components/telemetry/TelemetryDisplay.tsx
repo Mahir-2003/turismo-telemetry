@@ -1,13 +1,50 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TelemetryPacket } from "@/types/telemetry";
 import { Car, Gauge } from 'lucide-react';
+import { formatLapTime } from '@/lib/utils';
 
 interface TelemetryDisplayProps {
     data: TelemetryPacket | null;
 }
 
 const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
+    const [currentLapTime, setCurrentLapTime] = useState<number>(0);
+    const prevLapRef = useRef<number>(0);
+    const lapStartTimeRef = useRef<number>(Date.now());
+    const animationFrameRef = useRef<number>();
+
+    useEffect(() => {
+        if(!data) return;
+
+        // handle lap changes
+        if (data.current_lap > 0 && data.current_lap !== prevLapRef.current) {
+            prevLapRef.current = data.current_lap;
+            lapStartTimeRef.current = Date.now();
+        }
+
+        // check if the game is paused, in which case do not increment currentLapTime
+        const isPaused = Boolean(data.flags & (1 << 1));
+
+
+        // update lap time (ONLY when game is not paused)
+        const updateLapTime = () => {
+            if (data.current_lap > 0 && !isPaused) {
+                setCurrentLapTime(Date.now() - lapStartTimeRef.current);
+            }
+            animationFrameRef.current = requestAnimationFrame(updateLapTime);
+        };
+
+        animationFrameRef.current = requestAnimationFrame(updateLapTime);
+
+        // cleanup
+        return () => {
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
+        };
+    }, [data?.current_lap, data?.flags]);
+
     if (!data) {
         return null;
     }
@@ -15,7 +52,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const speedKph = (data.speed_mps * 3.6).toFixed(1);
     const throttlePercent = ((data.throttle / 255) * 100).toFixed(1);
     const brakePercent = ((data.brake / 255) * 100).toFixed(1);
-    const suggestedGear = data.suggested_gear !== 15 ? data.suggested_gear : null;
+    const suggestedGear = data.suggested_gear !== 15 ? data.suggested_gear : null; // 15 == no suggested gear
 
     return (
         <Card className="w-full max-w-4xl mx-auto mt-4">
@@ -52,10 +89,16 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                         <p className="text-2xl font-bold">{data.current_gear}</p>
                     </div>
                     <div className="space-y-1">
+                        <p className="text-sm font-medium">Last Lap</p>
+                        <p className="text-2xl font-bold">{formatLapTime(data.last_lap_time)}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium">Current Lap</p>
+                        <p className="text-2xl font-bold">{formatLapTime(currentLapTime)}</p>
+                    </div>
+                    <div className="space-y-1">
                         <p className="text-sm font-medium">Best Lap</p>
-                        <p className="text-2xl font-bold">
-                        {data.best_lap_time > 0 ? (data.best_lap_time / 1000).toFixed(3) : '--:--'}
-                        </p>
+                        <p className="text-2xl font-bold">{formatLapTime(data.best_lap_time)}</p>
                     </div>
                 </div>
             </CardContent>
