@@ -8,7 +8,6 @@ Still very much work in progress! None of the below is implemented as of 12/28/2
 - Real-time telemetry data visualization
 - Web-based dashboard accessible via browser
 - Support for Gran Turismo 7 on PS4/PS5
-- Type-safe data handling
 - Responsive design for all screen sizes
 
 ## Tech Stack
@@ -63,10 +62,13 @@ pip install -r backend/requirements.txt
 4. Start development servers:
 ```bash
 # Frontend
+cd frontend
 npm run dev
 
+# On a seperate terminal
 # Backend
-python -m uvicorn src.main:app --reload
+cd backend
+python main.py
 ```
 
 5. Open browser and navigate to `http://localhost:3000`
