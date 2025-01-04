@@ -109,6 +109,6 @@ export interface Vector3 {
     current_lap: number;
 
     // Car Code
-    car_code: number;          // Internal car identifier
+    car_id: number;          // Internal car identifier
   }
   

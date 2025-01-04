@@ -1,9 +1,13 @@
 # Telemetry Data Parser
 import struct
 from datetime import datetime
+import csv
+from pathlib import Path
+from typing import Dict
 
 from loguru import logger
-from .models import TelemetryPacket, Vector3
+from .models import TelemetryPacket, Vector3, CarInfo
+from backend.data.processors.car_processor import car_processor
 
 
 class TelemetryParser:
@@ -12,16 +16,7 @@ class TelemetryParser:
     def parse(self, data: bytes) -> TelemetryPacket:
         """Parse binary telemetry data into TelemetryPacket model."""
         try:
-            # previous_lap = -1
-            # current_lap = struct.unpack('h', data[0x74:0x74 + 2])[0]
-            # if current_lap > 0:
-            #     dt_now = datetime.now()
-            #     if current_lap != previous_lap:
-            #         previous_lap = current_lap
-            #         dt_start = dt_now
-            #     current_lap_time = dt_now - dt_start
-            # else:
-            #     current_lap_time = 0
+            car_id = struct.unpack('i', data[0x124:0x128])[0]
 
             return TelemetryPacket(
                 # Basic packet info
@@ -87,7 +82,6 @@ class TelemetryParser:
                 rpm_after_clutch=struct.unpack('f', data[0xFC:0x100])[0],
                 transmission_top_speed=float(struct.unpack('h', data[0x8C:0x8E])[0]),
 
-
                 # Gear ratios array
                 gear_ratios=[
                     struct.unpack('f', data[0x104:0x108])[0],  # 1st
@@ -101,7 +95,8 @@ class TelemetryParser:
                 ],
 
                 # Car identification
-                car_code=struct.unpack('i', data[0x124:0x128])[0]
+                car_id=car_id,
+                car_info=car_processor.get_car_info(car_id)
             )
         except Exception as e:
             logger.error(f"Error parsing telemetry data: {str(e)}")

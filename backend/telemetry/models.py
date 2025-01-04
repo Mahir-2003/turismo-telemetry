@@ -1,7 +1,15 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from enum import IntFlag
 
+
+class CarInfo(BaseModel):
+    """Model representing car and manufacturer information."""
+    id: int
+    name: str
+    maker_id: int
+    maker_name: str
+    image_url: str
 
 class Vector3(BaseModel):
     """3D vector for position, velocity, and rotation data."""
@@ -76,4 +84,5 @@ class TelemetryPacket(BaseModel):
     current_lap: int # current lap time calculated in frontend
 
     # Car identification
-    car_code: int
+    car_id: int
+    car_info: Optional[CarInfo] = None
