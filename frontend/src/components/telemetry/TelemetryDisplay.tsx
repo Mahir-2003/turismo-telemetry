@@ -13,6 +13,9 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const prevLapRef = useRef<number>(0);
     const lapStartTimeRef = useRef<number>(Date.now());
     const animationFrameRef = useRef<number>();
+    const accumulatedTimeRef = useRef<number>(0);
+    const lastTickRef = useRef<number>(Date.now());
+    const wasPausedRef = useRef<boolean>(false);
 
     useEffect(() => {
         if(!data) return;
@@ -21,16 +24,36 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
         if (data.current_lap > 0 && data.current_lap !== prevLapRef.current) {
             prevLapRef.current = data.current_lap;
             lapStartTimeRef.current = Date.now();
+            accumulatedTimeRef.current = 0;
+            lastTickRef.current = Date.now();
+            setCurrentLapTime(0);
         }
 
         // check if the game is paused, in which case do not increment currentLapTime
         const isPaused = Boolean(data.flags & (1 << 1));
 
+        // handle pause state changes
+        if (isPaused !== wasPausedRef.current) {
+            if (isPaused) {
+                // just paused, safe accumalated time
+                accumulatedTimeRef.current += Date.now() - lastTickRef.current;
+            } else {
+                // just unpaused, update last tick time
+                lastTickRef.current = Date.now();
+            }
+            wasPausedRef.current = isPaused;
+        }
 
         // update lap time (ONLY when game is not paused)
         const updateLapTime = () => {
             if (data.current_lap > 0 && !isPaused) {
-                setCurrentLapTime(Date.now() - lapStartTimeRef.current);
+                const currentTick = Date.now();
+                const elapsedSinceLastTick = currentTick - lastTickRef.current;
+                lastTickRef.current = currentTick
+                
+                // add new elapsed time to accumulated time
+                accumulatedTimeRef.current += elapsedSinceLastTick;
+                setCurrentLapTime(accumulatedTimeRef.current);
             }
             animationFrameRef.current = requestAnimationFrame(updateLapTime);
         };

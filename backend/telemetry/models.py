@@ -1,11 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from enum import IntFlag
 
 
 class CarInfo(BaseModel):
     """Model representing car and manufacturer information."""
-    id: int
+    # configuration tells Pydantic to allow model instances to be serialized properly for JSON transmission
+    model_config = ConfigDict(from_attributes=True)
+
+    car_id: int
     name: str
     maker_id: int
     maker_name: str
@@ -13,6 +16,8 @@ class CarInfo(BaseModel):
 
 class Vector3(BaseModel):
     """3D vector for position, velocity, and rotation data."""
+    model_config = ConfigDict(from_attributes=True)
+
     x: float
     y: float
     z: float
@@ -37,6 +42,8 @@ class SimulatorFlags(IntFlag):
 
 class TelemetryPacket(BaseModel):
     """Model representing a complete telemetry data packet."""
+    model_config = ConfigDict(from_attributes=True)
+
     # Basic packet info
     packet_id: int
 

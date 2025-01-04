@@ -1,13 +1,9 @@
 # Telemetry Data Parser
 import struct
-from datetime import datetime
-import csv
-from pathlib import Path
-from typing import Dict
 
 from loguru import logger
-from .models import TelemetryPacket, Vector3, CarInfo
-from backend.data.processors.car_processor import car_processor
+from .models import TelemetryPacket, Vector3
+from .data.car_processor import car_processor
 
 
 class TelemetryParser:

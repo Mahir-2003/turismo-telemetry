@@ -26,7 +26,7 @@ class CarDataProcessor:
         directory = Path(__file__).parent.parent / "data"
 
         # loading manufacturers
-        with open(directory / "makers.csv", "r", encoding="utf-8") as f:
+        with open(directory / "maker.csv", "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 self._makers[int(row["ID"])] = row["Name"]
@@ -43,35 +43,35 @@ class CarDataProcessor:
                 image_url = self._generate_image_url(maker_name, name)
 
                 self._cars[car_id] = CarInfo(
-                    id=car_id,
+                    car_id=car_id,
                     name=name,
                     maker_id=maker_id,
                     maker_name=maker_name,
                     image_url=image_url
                 )
 
-        def _generate_image_url(self, maker: str, model: str) -> str:
-            """
-                Generate image URL with proper formatting for GTPlus website.
-                example: https://gtplus.app/gt7/cars/jaguar-vgt-sv
-                format:  gtplus.app/gt7/cars/{manufacturer}-{model} (lowercase, hyphenated)
-            """
-            model_lower = model.lower()
-            maker_lower = maker.lower()
+    def _generate_image_url(self, maker: str, model: str) -> str:
+        """
+            Generate image URL with proper formatting for GTPlus website.
+            example: https://gtplus.app/gt7/cars/jaguar-vgt-sv
+            format:  gtplus.app/gt7/cars/{manufacturer}-{model} (lowercase, hyphenated)
+        """
+        model_lower = model.lower()
+        maker_lower = maker.lower()
 
-            # handle special cases where model name includes manufacturer in cars.csv
-            if model_lower.startswith(maker_lower):
-                url_part = model_lower
-            else:
-                url_part = f"{maker_lower}-{model_lower}"
+        # handle special cases where model name includes manufacturer in cars.csv
+        if model_lower.startswith(maker_lower):
+            url_part = model_lower
+        else:
+            url_part = f"{maker_lower}-{model_lower}"
 
-            # remove spaces and double hyphens
-            url_part = url_part.replace(" ", "-").replace("--", "-")
-            return f"https://gtplus.app/gt7/cars/{url_part}"
+        # remove spaces and double hyphens
+        url_part = url_part.replace(" ", "-").replace("'","").replace('"', "").replace("--", "-")
+        return f"https://gtplus.app/_next/image?url=%2Fimages%2Fcars%2F{url_part}.jpg&w=1920&q=75"
 
-        def get_car_info(self, car_id: int) -> Optional[CarInfo]:
-            """Get car information by car id."""
-            return self._cars.get(car_id)
+    def get_car_info(self, car_id: int) -> Optional[CarInfo]:
+        """Get car information by car id."""
+        return self._cars.get(car_id)
 
 
 # Create singleton instance
