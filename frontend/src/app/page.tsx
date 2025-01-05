@@ -32,7 +32,7 @@ export default function Home() {
   return (
     <main className="container mx-auto p-4 space-y-4">
       <h1 className="text-2xl font-bold text-center mb-8">
-        GT7 Telemetry Dashboard
+        Turismo Telemetry
       </h1>
       
       <ConnectionForm 

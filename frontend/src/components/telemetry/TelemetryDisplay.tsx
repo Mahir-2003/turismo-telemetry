@@ -82,7 +82,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Gauge className="h-5 w-5"/>
-                    GT7 Telemetry
+                    Telemetry Dashboard
                 </CardTitle>
             </CardHeader>
             <CardContent>
