@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TelemetryPacket } from "@/types/telemetry";
 import { Car, Gauge } from 'lucide-react';
 import { formatLapTime } from '@/lib/utils';
+import CarInfoDisplay from './CarInfoDisplay';
 
 interface TelemetryDisplayProps {
     data: TelemetryPacket | null;
@@ -78,54 +79,58 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const suggestedGear = data.suggested_gear !== 15 ? data.suggested_gear : null; // 15 == no suggested gear
 
     return (
-        <Card className="w-full max-w-4xl mx-auto mt-4">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Gauge className="h-5 w-5"/>
-                    Telemetry Dashboard
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium">Speed</p>
-                        <p className="text-2xl font-bold">{speedKph} km/h</p>
+        <div className='space-y-4'>
+            <CarInfoDisplay carInfo={data.car_info} />
+
+            <Card className="w-full max-w-4xl mx-auto mt-4">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Gauge className="h-5 w-5"/>
+                        Telemetry Dashboard
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Speed</p>
+                            <p className="text-2xl font-bold">{speedKph} km/h</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">RPM</p>
+                            <p className="text-2xl font-bold">{Math.round(data.engine_rpm)}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Suggested Gear</p>
+                            <p className="text-2xl font-bold">{suggestedGear !== null ? suggestedGear : 'N/A'}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Throttle</p>
+                            <p className="text-2xl font-bold">{throttlePercent}%</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Brake</p>
+                            <p className="text-2xl font-bold">{brakePercent}%</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Gear</p>
+                            <p className="text-2xl font-bold">{data.current_gear}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Last Lap</p>
+                            <p className="text-2xl font-bold">{formatLapTime(data.last_lap_time)}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Current Lap</p>
+                            <p className="text-2xl font-bold">{formatLapTime(currentLapTime)}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Best Lap</p>
+                            <p className="text-2xl font-bold">{formatLapTime(data.best_lap_time)}</p>
+                        </div>
                     </div>
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium">RPM</p>
-                        <p className="text-2xl font-bold">{Math.round(data.engine_rpm)}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium">Suggested Gear</p>
-                        <p className="text-2xl font-bold">{suggestedGear !== null ? suggestedGear : 'N/A'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium">Throttle</p>
-                        <p className="text-2xl font-bold">{throttlePercent}%</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium">Brake</p>
-                        <p className="text-2xl font-bold">{brakePercent}%</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium">Gear</p>
-                        <p className="text-2xl font-bold">{data.current_gear}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium">Last Lap</p>
-                        <p className="text-2xl font-bold">{formatLapTime(data.last_lap_time)}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium">Current Lap</p>
-                        <p className="text-2xl font-bold">{formatLapTime(currentLapTime)}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium">Best Lap</p>
-                        <p className="text-2xl font-bold">{formatLapTime(data.best_lap_time)}</p>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+        </div>
     );
 };
 
