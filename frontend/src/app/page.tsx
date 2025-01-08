@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ConnectionForm from '@/components/telemetry/ConnectionForm';
 import TelemetryDisplay from '@/components/telemetry/TelemetryDisplay';
 import { WebSocketConnection } from '@/lib/websocket';
@@ -9,8 +9,10 @@ export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
   const [telemetryData, setTelemetryData] = useState<TelemetryPacket | null>(null);
   const [wsConnection, setWsConnection] = useState<WebSocketConnection | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    // Cleanup on unmount
     return () => {
       if (wsConnection) {
         wsConnection.disconnect();
@@ -18,28 +20,50 @@ export default function Home() {
     };
   }, [wsConnection]);
 
-  const handleConnect = (psIP: string) => {
-    // Ensure any existing connection is disconnected
-    if (wsConnection) {
-      wsConnection.disconnect();
-    }
-    
-    const connection = new WebSocketConnection(
-      (data) => setTelemetryData(data),
-      (status) => setIsConnected(status)
-    );
-    connection.connect(psIP);
-    setWsConnection(connection);
-  };
+  const handleConnect = useCallback(async (psIP: string) => {
+    try {
+      setIsLoading(true);
+      
+      // If there's an existing connection, disconnect it first
+      if (wsConnection) {
+        await wsConnection.disconnect();
+      }
 
-  const handleDisconnect = () => {
-    if (wsConnection) {
-      wsConnection.disconnect();
-      setWsConnection(null);
-      setTelemetryData(null);
+      // Create new connection
+      const connection = new WebSocketConnection(
+        (data) => setTelemetryData(data),
+        (status) => setIsConnected(status)
+      );
+
+      // Store the connection instance
+      setWsConnection(connection);
+
+      // Attempt to connect
+      await connection.connect(psIP);
+    } catch (error) {
+      console.error('Connection error:', error);
       setIsConnected(false);
+      setTelemetryData(null);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [wsConnection]);
+
+  const handleDisconnect = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      if (wsConnection) {
+        await wsConnection.disconnect();
+        setWsConnection(null);
+        setTelemetryData(null);
+        setIsConnected(false);
+      }
+    } catch (error) {
+      console.error('Disconnect error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [wsConnection]);
 
   return (
     <main className="container mx-auto p-4 space-y-4">
@@ -51,6 +75,7 @@ export default function Home() {
         onConnect={handleConnect}
         onDisconnect={handleDisconnect}
         isConnected={isConnected}
+        isLoading={isLoading}
       />
       
       <TelemetryDisplay data={telemetryData} />

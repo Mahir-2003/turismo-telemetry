@@ -2,66 +2,127 @@ import { TelemetryPacket } from "@/types/telemetry";
 
 export class WebSocketConnection {
     private ws: WebSocket | null = null;
-    private reconnectAttempts = 0;
-    private maxReconnectAttempts = 5;
-    private reconnectDelay = 2000;
+    private isConnecting = false;
 
     constructor(
         private onMessage: (data: TelemetryPacket) => void,
         private onConnectionChange: (status: boolean) => void
     ) {}
 
-    connect(psIP: string) {
-        if (this.ws) {
-            this.ws.close();
+    async connect(psIP: string): Promise<void> {
+        // if already connecting, wait
+        if (this.isConnecting) {
+            return;
         }
 
         try {
-            this.ws = new WebSocket(`ws://localhost:8000/ws/telemetry`);
+            this.isConnecting = true;
+            
+            // if there's an existing connection, disconnect first
+            if (this.ws) {
+                await this.disconnect();
+            }
 
-            this.ws.onopen = () => {
-                this.onConnectionChange(true);
-                this.reconnectAttempts = 0;
-                // send PlayStation IP as first message
-                this.ws?.send(psIP);
-            };
+            return new Promise((resolve, reject) => {
+                let timeoutId: NodeJS.Timeout;
 
-            this.ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'heartbeat') {
-                    return;
+                const cleanup = () => {
+                    if (timeoutId) clearTimeout(timeoutId);
+                    if (this.ws) {
+                        this.ws.onopen = null;
+                        this.ws.onclose = null;
+                        this.ws.onerror = null;
+                        this.ws.onmessage = null;
+                        
+                        if (this.ws.readyState === WebSocket.OPEN) {
+                            this.ws.close();
+                        }
+                        this.ws = null;
+                    }
+                    this.isConnecting = false;
+                    this.onConnectionChange(false);
+                };
+
+                try {
+                    this.ws = new WebSocket(`ws://localhost:8000/ws/telemetry`);
+
+                    // set up connection timeout
+                    timeoutId = setTimeout(() => {
+                        cleanup();
+                        reject(new Error('Connection timeout'));
+                    }, 3000);
+
+                    this.ws.onopen = () => {
+                        clearTimeout(timeoutId);
+                        this.isConnecting = false;
+                        this.onConnectionChange(true);
+                        this.ws?.send(psIP);
+                        resolve();
+                    };
+
+                    this.ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'heartbeat') return;
+                        this.onMessage(data as TelemetryPacket);
+                    };
+
+                    this.ws.onclose = () => {
+                        cleanup();
+                        resolve();
+                    };
+
+                    this.ws.onerror = (error) => {
+                        cleanup();
+                        reject(error);
+                    };
+
+                } catch (error) {
+                    cleanup();
+                    reject(error);
                 }
-                this.onMessage(data as TelemetryPacket);
+            });
+        } catch (error) {
+            this.isConnecting = false;
+            throw error;
+        }
+    }
+    
+    async disconnect(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            const cleanup = () => {
+                if (this.ws) {
+                    this.ws.onopen = null;
+                    this.ws.onclose = null;
+                    this.ws.onerror = null;
+                    this.ws.onmessage = null;
+
+                    if (this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.close();
+                    }
+                    this.ws = null;
+                }
+                this.isConnecting = false;
+                this.onConnectionChange(false);
+                resolve();
             };
+
+            if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
+                cleanup();
+                return;
+            }
 
             this.ws.onclose = () => {
-                this.onConnectionChange(false);
-                this.handleReconnect(psIP);
+                cleanup();
             };
 
-            this.ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-                this.onConnectionChange(false);
-            };
-        } catch (error) {
-            console.error('WebSocket connection error:', error);
-            this.onConnectionChange(false);
-        }
-    }
+            if (this.ws.readyState === WebSocket.OPEN) {
+                this.ws.close();
+            } else {
+                cleanup();
+            }
 
-    private handleReconnect(psIP: string) {
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            setTimeout(() => this.connect(psIP), this.reconnectDelay);
-        }
+            // fallback, resolve after a short timeout if close event doesn't fire
+            setTimeout(cleanup, 100);
+        });
     }
-    
-    disconnect() {
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
-        }
-        this.onConnectionChange(false);
-    }
-    
 }
