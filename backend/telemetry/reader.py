@@ -1,9 +1,9 @@
 # GT7 UDP Reader
-
 import socket
 from typing import AsyncGenerator
 from loguru import logger
 from salsa20 import Salsa20_xor
+import asyncio
 
 from .parser import TelemetryParser
 from .models import TelemetryPacket
@@ -18,15 +18,27 @@ class TelemetryReader:
     def __init__(self, ps_ip: str):
         """Initialize UDP connection to GT7."""
         self.ps_ip = ps_ip
+        self.socket = None
+        self.is_running = False
+        self.parser = TelemetryParser()
+
+    def initialize_socket(self):
+        """Initialize and bind the UDP socket."""
+        if self.socket:
+            self.close()
+
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind(('0.0.0.0', self.RECEIVE_PORT))
         self.socket.settimeout(10)
-        self.packet_count = 0
-        self.parser = TelemetryParser()
+        self.is_running = True
 
     def _send_heartbeat(self):
         """Send heartbeat packet to GT7."""
-        self.socket.sendto(b'A', (self.ps_ip, self.SEND_PORT))
+        if self.socket and self.is_running:
+            try:
+                self.socket.sendto(b'A', (self.ps_ip, self.SEND_PORT))
+            except Exception as e:
+                logger.error(f"Error sending heartbeat: {str(e)}")
 
     def _decrypt_packet(self, data: bytes) -> bytes:
         """Decrypt received telemetry data using Salsa20."""
@@ -51,25 +63,48 @@ class TelemetryReader:
 
     async def stream(self) -> AsyncGenerator[TelemetryPacket, None]:
         """Stream telemetry data from GT7."""
-        self._send_heartbeat()
+        self.initialize_socket()
+        packet_count = 0
 
-        while True:
-            try:
-                data, _ = self.socket.recvfrom(self.BUFFER_SIZE)
-                self.packet_count += 1
+        try:
+            self._send_heartbeat()  # Initial heartbeat
 
-                if self.packet_count > self.HEARTBEAT_INTERVAL:
+            while self.is_running:
+                try:
+                    data, _ = self.socket.recvfrom(self.BUFFER_SIZE)
+                    packet_count += 1
+
+                    if packet_count > self.HEARTBEAT_INTERVAL:
+                        self._send_heartbeat()
+                        packet_count = 0
+
+                    decrypted_data = self._decrypt_packet(data)
+                    if decrypted_data:
+                        yield self.parser.parse(decrypted_data)
+
+                    # Allow other tasks to run
+                    await asyncio.sleep(0)
+
+                except socket.timeout:
+                    logger.warning("Socket timeout - sending heartbeat")
                     self._send_heartbeat()
-                    self.packet_count = 0
+                    packet_count = 0
+                except Exception as e:
+                    logger.error(f"Error in telemetry stream: {str(e)}")
+                    if not self.is_running:
+                        break
+                    raise
 
-                decrypted_data = self._decrypt_packet(data)
-                if decrypted_data:
-                    yield self.parser.parse(decrypted_data)
+        finally:
+            self.close()
 
-            except socket.timeout:
-                logger.warning("Socket timeout - sending heartbeat")
-                self._send_heartbeat()
-                self.packet_count = 0
+    def close(self):
+        """Close the UDP socket and cleanup."""
+        self.is_running = False
+        if self.socket:
+            try:
+                self.socket.close()
+                self.socket = None
+                logger.info("Telemetry socket closed")
             except Exception as e:
-                logger.error(f"Error in telemetry stream: {str(e)}")
-                raise
+                logger.error(f"Error closing socket: {str(e)}")

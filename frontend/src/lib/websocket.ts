@@ -5,7 +5,7 @@ export class WebSocketConnection {
     private isConnecting = false;
 
     constructor(
-        private onMessage: (data: TelemetryPacket) => void,
+        private onMessage: (data: TelemetryPacket | null) => void,
         private onConnectionChange: (status: boolean) => void
     ) {}
 
@@ -41,6 +41,7 @@ export class WebSocketConnection {
                     }
                     this.isConnecting = false;
                     this.onConnectionChange(false);
+                    this.onMessage(null);
                 };
 
                 try {
@@ -83,6 +84,7 @@ export class WebSocketConnection {
             });
         } catch (error) {
             this.isConnecting = false;
+            this.onMessage(null);
             throw error;
         }
     }
@@ -103,6 +105,7 @@ export class WebSocketConnection {
                 }
                 this.isConnecting = false;
                 this.onConnectionChange(false);
+                this.onMessage(null);
                 resolve();
             };
 

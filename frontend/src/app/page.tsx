@@ -12,10 +12,11 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Cleanup on unmount
+    // clean up on unmount
     return () => {
       if (wsConnection) {
         wsConnection.disconnect();
+        setTelemetryData(null);
       }
     };
   }, [wsConnection]);
@@ -23,22 +24,23 @@ export default function Home() {
   const handleConnect = useCallback(async (psIP: string) => {
     try {
       setIsLoading(true);
-      
-      // If there's an existing connection, disconnect it first
+      setTelemetryData(null);
+
+      // if there's an existing connection, disconnect it first
       if (wsConnection) {
         await wsConnection.disconnect();
       }
 
-      // Create new connection
+      // create new connection
       const connection = new WebSocketConnection(
         (data) => setTelemetryData(data),
         (status) => setIsConnected(status)
       );
 
-      // Store the connection instance
+      // store the connection instance
       setWsConnection(connection);
 
-      // Attempt to connect
+      // attempt to connect
       await connection.connect(psIP);
     } catch (error) {
       console.error('Connection error:', error);
