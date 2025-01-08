@@ -7,15 +7,20 @@ import { Wifi, WifiOff } from 'lucide-react';
 
 interface ConnectionFormProps {
     onConnect: (ip: string) => void;
+    onDisconnect: () => void;
     isConnected: boolean;
 }
 
-const ConnectionForm = ({ onConnect, isConnected }: ConnectionFormProps) => {
+const ConnectionForm = ({ onConnect, onDisconnect, isConnected }: ConnectionFormProps) => {
     const [ip, setIp] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onConnect(ip);
+        if (isConnected) {
+            onDisconnect();
+        } else {
+            onConnect(ip);
+        }
     };
 
     return (
@@ -41,10 +46,15 @@ const ConnectionForm = ({ onConnect, isConnected }: ConnectionFormProps) => {
                             pattern="^(\d{1,3}\.){3}\d{1,3}$"
                             required
                             className='w-full'
+                            disabled={isConnected}
                         />
                     </div>
-                    <Button type='submit' className='w-full' disabled={isConnected}>
-                        {isConnected ? 'Connected': 'Connect'}
+                    <Button 
+                        type='submit' 
+                        className='w-full'
+                        variant={isConnected ? 'destructive' : 'default'}
+                    >
+                        {isConnected ? 'Disconnect' : 'Connect'}
                     </Button>
                 </form>
                 {isConnected && (

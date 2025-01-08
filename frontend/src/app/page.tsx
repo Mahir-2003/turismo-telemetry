@@ -11,7 +11,6 @@ export default function Home() {
   const [wsConnection, setWsConnection] = useState<WebSocketConnection | null>(null);
 
   useEffect(() => {
-    // Cleanup WebSocket connection on unmount
     return () => {
       if (wsConnection) {
         wsConnection.disconnect();
@@ -20,13 +19,26 @@ export default function Home() {
   }, [wsConnection]);
 
   const handleConnect = (psIP: string) => {
+    // Ensure any existing connection is disconnected
+    if (wsConnection) {
+      wsConnection.disconnect();
+    }
+    
     const connection = new WebSocketConnection(
       (data) => setTelemetryData(data),
       (status) => setIsConnected(status)
     );
-    console.log(telemetryData);
     connection.connect(psIP);
     setWsConnection(connection);
+  };
+
+  const handleDisconnect = () => {
+    if (wsConnection) {
+      wsConnection.disconnect();
+      setWsConnection(null);
+      setTelemetryData(null);
+      setIsConnected(false);
+    }
   };
 
   return (
@@ -37,6 +49,7 @@ export default function Home() {
       
       <ConnectionForm 
         onConnect={handleConnect}
+        onDisconnect={handleDisconnect}
         isConnected={isConnected}
       />
       
