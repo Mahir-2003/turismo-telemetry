@@ -60,7 +60,7 @@ class CarDataProcessor:
         maker_lower = maker.lower()
 
         # handle special cases where model name includes manufacturer in cars.csv
-        if model_lower.startswith(maker_lower):
+        if maker_lower in model_lower:
             url_part = model_lower
         else:
             url_part = f"{maker_lower}-{model_lower}"
