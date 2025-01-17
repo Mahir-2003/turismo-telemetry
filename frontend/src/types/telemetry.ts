@@ -110,11 +110,13 @@ export interface TelemetryPacket {
   transmission_top_speed: number;
   gear_ratios: number[];     // Array of gear ratios
 
-  // Lap Information
-  // lap_count: number;
+  // Lap and Position Information
   best_lap_time: number;      // In milliseconds
   last_lap_time: number;      // In milliseconds
   current_lap: number;
+  total_laps: number;
+  current_position: number;
+  total_positions: number;
 
   // Car Code
   car_id: number;          // Internal car identifier

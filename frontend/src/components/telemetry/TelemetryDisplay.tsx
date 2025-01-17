@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TelemetryPacket } from "@/types/telemetry";
-import { Car, Gauge } from 'lucide-react';
+import { Gauge, Flag } from 'lucide-react';
 import { formatLapTime } from '@/lib/utils';
 import CarInfoDisplay from './CarInfoDisplay';
 
@@ -77,6 +77,11 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const throttlePercent = ((data.throttle / 255) * 100).toFixed(1);
     const brakePercent = ((data.brake / 255) * 100).toFixed(1);
     const suggestedGear = data.suggested_gear !== 15 ? data.suggested_gear : null; // 15 == no suggested gear
+    const currentLap = data.current_lap;
+    const totalLaps = data.total_laps;
+    const currentPosition = data.current_position;
+    const totalPositions = data.total_positions;
+    const isTrial = totalLaps == 0; // if total laps is 0 it is a time/drift trial
 
     return (
         <div className='space-y-4'>
@@ -114,6 +119,34 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                         <div className="space-y-1">
                             <p className="text-sm font-medium">Gear</p>
                             <p className="text-2xl font-bold">{data.current_gear}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card className="w-full max-w-4xl mx-auto mt-4">
+                <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Flag className="h-5 w-5"/>
+                            Lap Information
+                        </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Position</p>
+                            <p className="text-2xl font-bold">{currentPosition == -1 ? 'N/A' : `${currentPosition} / ${totalPositions}`}</p>
+                        </div>
+                        <div className="space-y-1">  {/* Empty for Spacing */}
+                            <p className="text-sm font-medium"></p>
+                            <p className="text-2xl font-bold"></p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Lap</p>
+                            <p className="text-2xl font-bold">{currentLap == -1 ? 
+                                'N/A' : 
+                                isTrial ? currentLap : `${currentLap} / ${totalLaps}`
+                            }
+                            </p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-sm font-medium">Last Lap</p>

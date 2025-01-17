@@ -60,10 +60,13 @@ class TelemetryParser:
                 tire_temp_rl=struct.unpack('f', data[0x68:0x6C])[0],
                 tire_temp_rr=struct.unpack('f', data[0x6C:0x70])[0],
 
-                # Lap Information
+                # Lap and Position Information
                 best_lap_time=max(struct.unpack('i', data[0x78:0x78 + 4])[0], 0),  # In milliseconds, -1 means no time
                 last_lap_time=max(struct.unpack('i', data[0x7C:0x7C + 4])[0], 0),  # In milliseconds, -1 means no time
                 current_lap=struct.unpack('h', data[0x74:0x74 + 2])[0],  # Current lap number
+                total_laps=struct.unpack('h', data[0x76:0x76 + 2])[0],  # Total Laps
+                current_position=struct.unpack('h', data[0x84:0x84+2])[0], # Current Position
+                total_positions=struct.unpack('h', data[0x86:0x86+2])[0], # Total Positions
 
                 # Transmission and control
                 current_gear=struct.unpack('B', data[0x90:0x91])[0] & 0b00001111,
