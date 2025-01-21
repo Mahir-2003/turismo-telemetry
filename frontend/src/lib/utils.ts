@@ -21,3 +21,14 @@ export function formatLapTime(ms: number): string {
   
   return `${minutes}:${remainingSeconds.toFixed(3).padStart(6, '0')}`;
 }
+
+/**
+ * Converts meters per second to either KPH or MPH
+ * @param mps Speed in meters per second
+ * @param unit Desired output unit ('kph' or 'mph')
+ * @returns Formatted speed string with unit
+ */
+export function formatSpeed(mps: number, unit: 'kph' | 'mph'): string {
+  const speed = unit === 'kph' ? mps * 3.6: mps * 2.237; // mps * 3.6 = kph, mps * 2.237 = mph
+  return `${speed.toFixed(1)} ${unit.toUpperCase()}`;
+}

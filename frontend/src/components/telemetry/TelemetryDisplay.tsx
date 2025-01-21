@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { TelemetryPacket } from "@/types/telemetry";
 import { Gauge, Flag } from 'lucide-react';
-import { formatLapTime } from '@/lib/utils';
+import { formatLapTime, formatSpeed } from '@/lib/utils';
 import CarInfoDisplay from './CarInfoDisplay';
 
 interface TelemetryDisplayProps {
@@ -11,6 +12,7 @@ interface TelemetryDisplayProps {
 
 const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const [currentLapTime, setCurrentLapTime] = useState<number>(0);
+    const [speedUnit, setSpeedUnit] = useState<'kph' | 'mph'>('kph');
     const prevLapRef = useRef<number>(0);
     const lapStartTimeRef = useRef<number>(Date.now());
     const animationFrameRef = useRef<number>();
@@ -73,7 +75,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
         return null;
     }
 
-    const speedKph = (data.speed_mps * 3.6).toFixed(1);
+    const formattedSpeed = formatSpeed(data.speed_mps, speedUnit);
     const throttlePercent = ((data.throttle / 255) * 100).toFixed(1);
     const brakePercent = ((data.brake / 255) * 100).toFixed(1);
     const suggestedGear = data.suggested_gear !== 15 ? data.suggested_gear : null; // 15 == no suggested gear
@@ -89,16 +91,26 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
 
             <Card className="w-full max-w-4xl mx-auto mt-4">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                         <Gauge className="h-5 w-5"/>
                         Telemetry Dashboard
-                    </CardTitle>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm">KPH</span>
+                        <div className={`h-5 w-8 cursor-pointer rounded-full p-1 transition-colors duration-200 ${speedUnit === 'mph' ? 'bg-red-500' : 'bg-blue-500'}`} 
+                            onClick={() => setSpeedUnit(speedUnit === 'kph' ? 'mph' : 'kph')}>
+                            <div className={`h-3 w-3 rounded-full bg-white transition-transform duration-200 ${speedUnit === 'mph' ? 'translate-x-3' : 'translate-x-0'}`} />
+                        </div>
+                        <span className="text-sm">MPH</span>
+                    </div>
+                </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
                             <p className="text-sm font-medium">Speed</p>
-                            <p className="text-2xl font-bold">{speedKph} km/h</p>
+                            <p className="text-2xl font-bold">{formattedSpeed}</p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-sm font-medium">RPM</p>
