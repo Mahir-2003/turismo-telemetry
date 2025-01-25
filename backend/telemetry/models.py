@@ -93,6 +93,12 @@ class TelemetryPacket(BaseModel):
     current_position: int
     total_positions: int
 
+    # Fuel Information
+    fuel_percentage: float
+    fuel_per_lap: float
+    estimated_remaining_laps: float
+    fuel_mixture_setting: int
+
     # Car identification
     car_id: int
     car_info: Optional[CarInfo] = None

@@ -82,8 +82,6 @@ export interface TelemetryPacket {
   // };
   //
   // Race Information
-  // check and update models.py before using some of the below
-  // variables, i.e: lapCount, not in TelemetryPacket
   packet_id: number;         // Packet identifier
   time_of_day: number;  // Current time of day
   preRaceStartPosition: number;
@@ -117,6 +115,12 @@ export interface TelemetryPacket {
   total_laps: number;
   current_position: number;
   total_positions: number;
+
+  // Fuel Information
+  fuel_percentage: number;
+  fuel_per_lap: number;
+  estimated_remaining_laps: number;
+  fuel_mixture_setting: number;
 
   // Car Code
   car_id: number;          // Internal car identifier
