@@ -109,4 +109,5 @@ MIT License - See LICENSE file for details
 
 Based on:
 - [Original GT7 Python telemetry implementation](https://github.com/Bornhall/gt7telemetry) by Bornhall
+- [GT7 Dashboard](https://github.com/snipem/gt7dashboard) by snipem
 - [GT7 Simulator Interface](https://github.com/Nenkai/PDTools/tree/master) by Nenkai (Specifically `PDTools.SimulatorInterface`)
