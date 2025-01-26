@@ -4,15 +4,42 @@ import struct
 from loguru import logger
 from .models import TelemetryPacket, Vector3
 from .data.car_processor import car_processor
+from .fuel_monitor import FuelMonitor
 
 
 class TelemetryParser:
     """Parser for GT7 telemetry binary data."""
+    def __init__(self):
+        self.fuel_monitor = FuelMonitor()
+        self._previous_lap = 0
 
     def parse(self, data: bytes) -> TelemetryPacket:
         """Parse binary telemetry data into TelemetryPacket model."""
         try:
             car_id = struct.unpack('i', data[0x124:0x128])[0]
+
+            # basic fuel data from binary packet
+            current_fuel = struct.unpack('f', data[0x44:0x48])[0]
+            fuel_capacity = struct.unpack('f', data[0x48:0x4C])[0]
+
+            # current lap number for fuel monitoring
+            current_lap = struct.unpack('h', data[0x74:0x74 + 2])[0]
+
+            # update fuel monitor
+            self.fuel_monitor.update_fuel_reading(
+                current_fuel=current_fuel,
+                lap_number=current_lap
+            )
+
+            # if its a new lap, record the completion
+            if current_lap > 0 and current_lap != self._previous_lap:
+                self.fuel_monitor.on_lap_complete(current_lap)
+                self._previous_lap = current_lap
+
+            # calculate fuel metrics
+            fuel_percentage = self.fuel_monitor.calculate_fuel_percentage(current_fuel, fuel_capacity)
+            current_lap_consumption = self.fuel_monitor.get_current_lap_consumption()
+            estimated_laps = self.fuel_monitor.calculate_remaining_laps(current_fuel)
 
             return TelemetryPacket(
                 # Basic packet info
@@ -63,10 +90,17 @@ class TelemetryParser:
                 # Lap and Position Information
                 best_lap_time=max(struct.unpack('i', data[0x78:0x78 + 4])[0], 0),  # In milliseconds, -1 means no time
                 last_lap_time=max(struct.unpack('i', data[0x7C:0x7C + 4])[0], 0),  # In milliseconds, -1 means no time
-                current_lap=struct.unpack('h', data[0x74:0x74 + 2])[0],  # Current lap number
+                current_lap=current_lap,                                        # Current Lap
                 total_laps=struct.unpack('h', data[0x76:0x76 + 2])[0],  # Total Laps
                 current_position=struct.unpack('h', data[0x84:0x84+2])[0], # Current Position
                 total_positions=struct.unpack('h', data[0x86:0x86+2])[0], # Total Positions
+
+                # Fuel Information
+                fuel_percentage=fuel_percentage,
+                fuel_capacity=fuel_capacity,
+                current_fuel=current_fuel,
+                fuel_consumption_lap=current_lap_consumption,
+                estimated_laps_remaining=estimated_laps,
 
                 # Transmission and control
                 current_gear=struct.unpack('B', data[0x90:0x91])[0] & 0b00001111,

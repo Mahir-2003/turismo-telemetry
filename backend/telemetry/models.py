@@ -74,9 +74,9 @@ class TelemetryPacket(BaseModel):
     # Transmission and control
     current_gear: int
     suggested_gear: int
-    flags: int  # SimulatorFlags
-    throttle: int  # 0-255
-    brake: int  # 0-255
+    flags: int                          # SimulatorFlags
+    throttle: int                       # 0-255
+    brake: int                          # 0-255
 
     # Clutch and transmission
     clutch: float
@@ -88,16 +88,17 @@ class TelemetryPacket(BaseModel):
     # Lap and Position Information
     best_lap_time: int
     last_lap_time: int
-    current_lap: int # current lap time calculated in frontend
+    current_lap: int                    # current lap time calculated in frontend
     total_laps: int
     current_position: int
     total_positions: int
 
     # Fuel Information
     fuel_percentage: float
-    fuel_per_lap: float
-    estimated_remaining_laps: float
-    fuel_mixture_setting: int
+    fuel_capacity: float                # max fuel capacity
+    current_fuel: float
+    fuel_consumption_lap: float         # fuel consumed in current lap
+    estimated_laps_remaining: float
 
     # Car identification
     car_id: int
