@@ -10,18 +10,174 @@ interface TelemetryDisplayProps {
     data: TelemetryPacket | null;
 }
 
+interface LapData {
+    fuelUsed: number; // Fuel percentage used in each lap
+    lapTime: number; // Lap time in milliseconds
+}
+
 const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
+    // states for tracking lap data
     const [currentLapTime, setCurrentLapTime] = useState<number>(0);
+    const [completedLaps, setCompletedLaps] = useState<LapData[]>([]);
+    const [averageFuelPerLap, setAverageFuelPerLap] = useState<number>(0);
+    const [averageLapTime, setAverageLapTime] = useState<number>(0);
+
     const [speedUnit, setSpeedUnit] = useState<'kph' | 'mph'>('kph');
     const prevLapRef = useRef<number>(0);
+    const startFuelRef = useRef<number>(100); // store starting fuel percentage
     const lapStartTimeRef = useRef<number>(Date.now());
     const animationFrameRef = useRef<number>();
     const accumulatedTimeRef = useRef<number>(0);
     const lastTickRef = useRef<number>(Date.now());
     const wasPausedRef = useRef<boolean>(false);
 
+    // useEffect(() => {
+    //     if(!data) return;
+
+    //     // check for race reset/restart
+    //     if (data.current_lap === 1 && prevLapRef.current > 1) {
+    //         // reset lap/average data
+    //         setCompletedLaps([]);
+    //         setAverageFuelPerLap(0);
+    //         setAverageLapTime(0);
+    //         startFuelRef.current = data.fuel_percentage;
+    //     }
+
+    //     // detect lap completion
+    //     if (data.current_lap > 0 && data.current_lap !== prevLapRef.current) {
+    //         const fuelUsedThisLap = startFuelRef.current - data.fuel_percentage;
+
+    //         // add new lap data
+    //         const newLapData: LapData = {
+    //             fuelUsed: fuelUsedThisLap,
+    //             lapTime: data.last_lap_time // in milliseconds already
+    //         }
+
+    //         // update completed laps
+    //         setCompletedLaps(prev => {
+    //             const newLaps = [...prev, newLapData]; //.slice(-5), for if i want to keep only last 5 laps rather than all of em
+
+    //             // only count completed laps for average (length - 1)
+    //             const newLapsLength = newLaps.length > 0 ? newLaps.length - 1 : 0;
+
+
+    //             // calculate new averages
+    //             // if no completed laps yet, use 0 as default
+    //             const avgFuel = newLapsLength > 0 
+    //                 ? newLaps.reduce((sum, lap) => sum + lap.fuelUsed, 0) / newLapsLength 
+    //                 : 0;
+    //             const avgTime = newLapsLength > 0 
+    //                 ? newLaps.reduce((sum, lap) => sum + lap.lapTime, 0) / newLapsLength 
+    //                 : 0;
+
+    //             setAverageFuelPerLap(avgFuel);
+    //             setAverageLapTime(avgTime);
+
+    //             return newLaps
+    //         });
+
+    //         // reset starting fuel for next lap
+    //         startFuelRef.current = data.fuel_percentage;
+    //         prevLapRef.current = data.current_lap;
+    //     }
+
+    //     // handle lap changes
+    //     if (data.current_lap > 0 && data.current_lap !== prevLapRef.current) {
+    //         prevLapRef.current = data.current_lap;
+    //         lapStartTimeRef.current = Date.now();
+    //         accumulatedTimeRef.current = 0;
+    //         lastTickRef.current = Date.now();
+    //         setCurrentLapTime(0);
+    //     }
+
+    //     // check if the game is paused, in which case do not increment currentLapTime
+    //     const isPaused = Boolean(data.flags & (1 << 1));
+
+    //     // handle pause state changes
+    //     if (isPaused !== wasPausedRef.current) {
+    //         if (isPaused) {
+    //             // just paused, safe accumalated time
+    //             accumulatedTimeRef.current += Date.now() - lastTickRef.current;
+    //         } else {
+    //             // just unpaused, update last tick time
+    //             lastTickRef.current = Date.now();
+    //         }
+    //         wasPausedRef.current = isPaused;
+    //     }
+
+    //     // update lap time (ONLY when game is not paused)
+    //     const updateLapTime = () => {
+    //         if (data.current_lap > 0 && !isPaused) {
+    //             const currentTick = Date.now();
+    //             const elapsedSinceLastTick = currentTick - lastTickRef.current;
+    //             lastTickRef.current = currentTick
+                
+    //             // add new elapsed time to accumulated time
+    //             accumulatedTimeRef.current += elapsedSinceLastTick;
+    //             setCurrentLapTime(accumulatedTimeRef.current);
+    //         }
+    //         animationFrameRef.current = requestAnimationFrame(updateLapTime);
+    //     };
+
+    //     animationFrameRef.current = requestAnimationFrame(updateLapTime);
+
+    //     // cleanup
+    //     return () => {
+    //         if (animationFrameRef.current) {
+    //             cancelAnimationFrame(animationFrameRef.current);
+    //         }
+    //     };
+    // }, [data?.fuel_percentage, data?.last_lap_time, data?.current_lap, data?.flags]);
+
+    // Fuel monitoring useEffect
     useEffect(() => {
-        if(!data) return;
+        if (!data) return;
+
+        // check for race reset/restart
+        if (data.current_lap === 1 && prevLapRef.current > 1) {
+            // reset lap/average data
+            setCompletedLaps([]);
+            setAverageFuelPerLap(0);
+            setAverageLapTime(0);
+            startFuelRef.current = data.fuel_percentage;
+        }
+
+        // detect lap completion
+        if (data.current_lap > 0 && data.current_lap !== prevLapRef.current) {
+            const fuelUsedThisLap = startFuelRef.current - data.fuel_percentage;
+
+            // add new lap data
+            const newLapData: LapData = {
+                fuelUsed: fuelUsedThisLap,
+                lapTime: data.last_lap_time
+            }
+
+            // update completed laps
+            setCompletedLaps(prev => {
+                const newLaps = [...prev, newLapData];
+                const newLapsLength = newLaps.length > 0 ? newLaps.length - 1 : 0;
+
+                const avgFuel = newLapsLength > 0 
+                    ? newLaps.reduce((sum, lap) => sum + lap.fuelUsed, 0) / newLapsLength 
+                    : 0;
+                const avgTime = newLapsLength > 0 
+                    ? newLaps.reduce((sum, lap) => sum + lap.lapTime, 0) / newLapsLength 
+                    : 0;
+
+                setAverageFuelPerLap(avgFuel);
+                setAverageLapTime(avgTime);
+
+                return newLaps;
+            });
+
+            // reset starting fuel for next lap
+            startFuelRef.current = data.fuel_percentage;
+        }
+    }, [data?.fuel_percentage, data?.last_lap_time, data?.current_lap]);
+
+    // Lap timing useEffect
+    useEffect(() => {
+        if (!data) return;
 
         // handle lap changes
         if (data.current_lap > 0 && data.current_lap !== prevLapRef.current) {
@@ -86,8 +242,8 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const fuelPercentage = data.fuel_percentage;
     const currentFuel = data.current_fuel;
     const fuelCapacity = data.fuel_capacity;
-    const estimatedLapsRemaining = data.estimated_laps_remaining;
     const isTrial = totalLaps == 0; // if total laps is 0 it is a time/drift trial
+    const estimatedLapsRemaining = averageFuelPerLap > 0 ? data?.fuel_percentage / averageFuelPerLap: 0;
 
     return (
         <div className='space-y-4'>
@@ -202,12 +358,16 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                                 </span>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <div className="space-y-1">
                                 <p className="text-sm font-medium">Current Fuel</p>
                                 <p className="text-2xl font-bold">
                                     {currentFuel.toFixed(1)} / {fuelCapacity.toFixed(1)} L
                                 </p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium">Avg. Fuel Per Lap</p>
+                                <p className="text-2xl font-bold">{averageFuelPerLap > 0 ? `${averageFuelPerLap.toFixed(1)}%` : '---'}</p>   
                             </div>
                             <div className="space-y-1">
                                 <p className="text-sm font-medium">Estimated Laps Remaining</p>
