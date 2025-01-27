@@ -31,15 +31,9 @@ class TelemetryParser:
                 lap_number=current_lap
             )
 
-            # if its a new lap, record the completion
-            if current_lap > 0 and current_lap != self._previous_lap:
-                self.fuel_monitor.on_lap_complete(current_lap)
-                self._previous_lap = current_lap
-
             # calculate fuel metrics
             fuel_percentage = self.fuel_monitor.calculate_fuel_percentage(current_fuel, fuel_capacity)
             current_lap_consumption = self.fuel_monitor.get_current_lap_consumption()
-            estimated_laps = self.fuel_monitor.calculate_remaining_laps(current_fuel)
 
             return TelemetryPacket(
                 # Basic packet info
@@ -100,7 +94,6 @@ class TelemetryParser:
                 fuel_capacity=fuel_capacity,
                 current_fuel=current_fuel,
                 fuel_consumption_lap=current_lap_consumption,
-                estimated_laps_remaining=estimated_laps,
 
                 # Transmission and control
                 current_gear=struct.unpack('B', data[0x90:0x91])[0] & 0b00001111,

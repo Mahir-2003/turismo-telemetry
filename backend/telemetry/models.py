@@ -98,7 +98,6 @@ class TelemetryPacket(BaseModel):
     fuel_capacity: float                # max fuel capacity
     current_fuel: float
     fuel_consumption_lap: float         # fuel consumed in current lap
-    estimated_laps_remaining: float
 
     # Car identification
     car_id: int

@@ -121,7 +121,6 @@ export interface TelemetryPacket {
   fuel_capacity: number;      // max fuel capacity
   current_fuel: number;
   fuel_consuption_lap: number; // fuel consumed in current lap
-  estimated_laps_remaining: number;
 
   // Car Code
   car_id: number;          // Internal car identifier
