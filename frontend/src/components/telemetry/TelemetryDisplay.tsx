@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { TelemetryPacket } from "@/types/telemetry";
-import { Gauge, Flag } from 'lucide-react';
+import { Gauge, Flag, Fuel } from 'lucide-react';
 import { formatLapTime, formatSpeed } from '@/lib/utils';
 import CarInfoDisplay from './CarInfoDisplay';
 
@@ -83,6 +83,10 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const totalLaps = data.total_laps;
     const currentPosition = data.current_position;
     const totalPositions = data.total_positions;
+    const fuelPercentage = data.fuel_percentage;
+    const currentFuel = data.current_fuel;
+    const fuelCapacity = data.fuel_capacity;
+    const estimatedLapsRemaining = data.estimated_laps_remaining;
     const isTrial = totalLaps == 0; // if total laps is 0 it is a time/drift trial
 
     return (
@@ -171,6 +175,46 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                         <div className="space-y-1">
                             <p className="text-sm font-medium">Best Lap</p>
                             <p className="text-2xl font-bold">{formatLapTime(data.best_lap_time)}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card className="w-full max-w-4xl mx-auto mt-4">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                            <Fuel className="h-5 w-5"/>
+                            Fuel Information
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        {/* Fuel Bar */}
+                        <div className="relative w-full h-8 bg-gray-800 rounded-md overflow-hidden">
+                            {/* Fuel Level Bar */}
+                            <div 
+                                className="absolute h-full bg-orange-400 transition-all duration-300 ease-in-out"
+                                style={{ width: `${Math.max(0, Math.min(100, fuelPercentage))}%` }}
+                            />
+                            {/* Percentage Text */}
+                            <div className="absolute inset-0 flex items-center justify-end pr-2">
+                                <span className="text-white font-bold">
+                                    {fuelPercentage.toFixed(1)}%
+                                </span>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium">Current Fuel</p>
+                                <p className="text-2xl font-bold">
+                                    {currentFuel.toFixed(1)} / {fuelCapacity.toFixed(1)} L
+                                </p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium">Estimated Laps Remaining</p>
+                                <p className="text-2xl font-bold">
+                                    {estimatedLapsRemaining.toFixed(1)}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </CardContent>

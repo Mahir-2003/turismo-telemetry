@@ -118,9 +118,10 @@ export interface TelemetryPacket {
 
   // Fuel Information
   fuel_percentage: number;
-  fuel_per_lap: number;
-  estimated_remaining_laps: number;
-  fuel_mixture_setting: number;
+  fuel_capacity: number;      // max fuel capacity
+  current_fuel: number;
+  fuel_consuption_lap: number; // fuel consumed in current lap
+  estimated_laps_remaining: number;
 
   // Car Code
   car_id: number;          // Internal car identifier
