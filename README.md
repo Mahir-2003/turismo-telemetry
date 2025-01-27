@@ -16,23 +16,6 @@ Still very much work in progress! As of 1/5/2025, a basic dashboard has been imp
 - **Backend**: Python, FastAPI, WebSocket
 - **Protocol**: UDP with Salsa20 encryption
 
-## Project Structure
-
-```
-gt7-telemetry/
-├── src/                      # Frontend application
-│   ├── app/                  # Next.js pages
-│   ├── components/           # React components
-│   ├── lib/                  # Utility functions
-│   └── types/               # TypeScript definitions
-├── backend/                  # Python backend
-│   ├── main.py              # FastAPI application
-│   └── telemetry/           # GT7 telemetry handling
-├── docs/                     # Documentation
-├── tests/                    # Test files
-└── scripts/                  # Build/deployment scripts
-```
-
 ## Prerequisites
 
 - Node.js 18+
