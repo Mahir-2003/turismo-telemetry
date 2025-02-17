@@ -60,7 +60,17 @@ module.exports = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+  		},
+		keyframes: {
+			flash: {
+                '0%, 100%': { opacity: 1 },
+                '50%': { opacity: 0.5 }
+            },
+			revFlash: {
+                '0%, 100%': { backgroundColor: 'hsl(0, 84%, 60%)' },  // Red
+                '50%': { backgroundColor: 'hsl(181, 100%, 56%)' }     // Light blue
+            }
+		}
   	}
   },
   plugins: [require("tailwindcss-animate")],

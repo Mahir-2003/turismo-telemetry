@@ -15,6 +15,44 @@ interface LapData {
     lapTime: number; // Lap time in milliseconds
 }
 
+const RPMBar = ({ rpm, rpmFlashing, rpmHit }: { rpm: number; rpmFlashing: number; rpmHit: number }) => {
+
+    const adjustedRpmHit = rpmHit - (rpmHit * 0.08); // 2% buffer so it can reach the end of the bar
+    const percentage = (rpm / adjustedRpmHit) * 100; // percentage of current RPM relative to redline
+    const warningThreshold = (rpmFlashing / rpmHit) * 100;     // calculate warning threshold percentage
+
+    // smooth gradient that transitions through the colors, UNUSED, KEPT FOR NOW
+    // const gradient = `linear-gradient(to right, 
+    //     hsl(142, 76%, 36%) 0%, 
+    //     hsl(40, 96%, 45%) ${warningThreshold}%, 
+    //     hsl(0, 84%, 60%) ${warningThreshold + 20}%, 
+    //     hsl(0, 84%, 60%) 100%)`;
+
+
+    // color based on RPM percentage
+    const getColor = (percent: number) => {
+        // start with green hue (120), transition to yellow (60), then red (0)
+        const hue = Math.max(0, 120 - (percent * 1.1)); // multipler to make red appear sooner
+        return `hsl(${hue}, 90%, 50%)`;
+    };
+    // determine if RPM is in flashing range
+    const isFlashing = rpm >= rpmFlashing;
+    
+    return (
+        <div className='w-full h-2 bg-gray-800 rounded-full overflow-hidden'>
+            <div 
+                className={`h-full ${isFlashing ? 'animate-[revFlash_0.1s_ease-in-out_infinite]' : ''}`}
+                style={{
+                    width: `${Math.min(100, percentage)}%`,
+                    background: isFlashing ? undefined : getColor(percentage),
+                }}
+            />
+        </div>
+    );
+
+
+}
+
 const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     // states for tracking lap data
     const [currentLapTime, setCurrentLapTime] = useState<number>(0);
@@ -168,7 +206,17 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                     </div>
                 </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
+                    <div className='flex items-center gap-2'>
+                        <RPMBar
+                            rpm={data.engine_rpm}
+                            rpmFlashing={data.rpm_flashing}
+                            rpmHit={data.rpm_hit}
+                        />
+                        <span className="text-sm font-bold min-w-[80px] text-right">
+                            {Math.round(data.engine_rpm)} RPM
+                        </span>
+                    </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
                             <p className="text-sm font-medium">Speed</p>
