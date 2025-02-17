@@ -89,6 +89,10 @@ class TelemetryParser:
                 current_position=struct.unpack('h', data[0x84:0x84+2])[0], # Current Position
                 total_positions=struct.unpack('h', data[0x86:0x86+2])[0], # Total Positions
 
+                # RPM Info
+                rpm_flashing=struct.unpack('f', data[0x88:0x8A])[0], # indicates RPM when rev indicator starts flashing
+                rpm_hit=struct.unpack('f', data[0x8A:0x8C])[0],  # indicates RPM when rev limiter is hit
+
                 # Fuel Information
                 fuel_percentage=fuel_percentage,
                 fuel_capacity=fuel_capacity,

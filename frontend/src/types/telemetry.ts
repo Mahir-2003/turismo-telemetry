@@ -15,7 +15,7 @@ export interface Vector3 {
 export enum SimulatorFlags {
   NONE = 0,
   CAR_ON_TRACK = 1 << 0,
-  PAUSED = 1 << 1, // simulation will not be paused in online modes
+  PAUSED = 1 << 1,                // simulation will not be paused in online modes
   LOADING = 1 << 2,
   IN_GEAR = 1 << 3,
   HAS_TURBO = 1 << 4,
@@ -30,22 +30,22 @@ export enum SimulatorFlags {
 
 export interface TelemetryPacket {
   // Position and Movement
-  position: Vector3;           // Track position in meters
-  velocity: Vector3;           // Velocity in track units (meters)
-  rotation: Vector3;          // Rotation (Pitch/Yaw/Roll) from -1 to 1
+  position: Vector3;              // Track position in meters
+  velocity: Vector3;              // Velocity in track units (meters)
+  rotation: Vector3;              // Rotation (Pitch/Yaw/Roll) from -1 to 1
   rel_orientation_to_north: number;  // 1.0 is north, 0.0 is south
-  angular_velocity: Vector3;   // Car rotation speed in radians/second
-  body_height: number;         // Height of car body
+  angular_velocity: Vector3;      // Car rotation speed in radians/second
+  body_height: number;            // Height of car body
 
   // Engine and Performance
-  engine_rpm: number;          // Current RPM
-  gas_level: number;          // Current gas level in liters, from 0 to gasCapacity
-  gas_capacity: number;       // Maximum gas capacity (100 for most cars, 5 for karts, 0 for electric cars)
-  speed_mps: number;          // Speed in meters per second (m/s)
-  turbo_boost: number;        // Turbo boost (below 1.0 is below 0 ingame, so 2.0 = 1 x 100kPa)
-  oil_pressure: number;       // Oil pressure in bars
-  water_temp: number;         // Water temperature
-  oil_temp: number;           // Oil temperature
+  engine_rpm: number;             // Current RPM
+  gas_level: number;              // Current gas level in liters, from 0 to gasCapacity
+  gas_capacity: number;           // Maximum gas capacity (100 for most cars, 5 for karts, 0 for electric cars)
+  speed_mps: number;              // Speed in meters per second (m/s)
+  turbo_boost: number;            // Turbo boost (below 1.0 is below 0 ingame, so 2.0 = 1 x 100kPa)
+  oil_pressure: number;           // Oil pressure in bars
+  water_temp: number;             // Water temperature
+  oil_temp: number;               // Oil temperature
 
   // Tire Data Surface Temperature
   // Temperature in Celsius
@@ -67,7 +67,7 @@ export interface TelemetryPacket {
   //   rearRight: number;
   // };
   //
-  // tireRadius: {             // Tire radius in meters
+  // tireRadius: {                  // Tire radius in meters
   //   frontLeft: number;
   //   frontRight: number;
   //   rearLeft: number;
@@ -82,35 +82,35 @@ export interface TelemetryPacket {
   // };
   //
   // Race Information
-  packet_id: number;         // Packet identifier
-  time_of_day: number;  // Current time of day
+  packet_id: number;                // Packet identifier
+  time_of_day: number;              // Current time of day
   preRaceStartPosition: number;
   numCarsAtPreRace: number;
   
   // Car Control
   min_alert_rpm: number;
   max_alert_rpm: number;
-  calculate_max_speed: number; // Max possible speed achievable with current transmission settings
+  calculate_max_speed: number;       // Max possible speed achievable with current transmission settings
   flags: SimulatorFlags;
   current_gear: number;
   suggested_gear: number;
-  throttle: number;         // 0-255
-  brake: number;           // 0-255
+  throttle: number;                  // 0-255
+  brake: number;                     // 0-255
 
   // Road Data
   roadPlane: Vector3;
   roadPlaneDistance: number;
 
   // Transmission
-  clutch_pedal: number;      // 0.0 to 1.0
-  clutch_engagement: number; // 0.0 to 1.0
+  clutch_pedal: number;               // 0.0 to 1.0
+  clutch_engagement: number;          // 0.0 to 1.0
   rpm_after_clutch: number;
   transmission_top_speed: number;
-  gear_ratios: number[];     // Array of gear ratios
+  gear_ratios: number[];              // Array of gear ratios
 
   // Lap and Position Information
-  best_lap_time: number;      // In milliseconds
-  last_lap_time: number;      // In milliseconds
+  best_lap_time: number;              // In milliseconds
+  last_lap_time: number;              // In milliseconds
   current_lap: number;
   total_laps: number;
   current_position: number;
@@ -118,11 +118,15 @@ export interface TelemetryPacket {
 
   // Fuel Information
   fuel_percentage: number;
-  fuel_capacity: number;      // max fuel capacity
+  fuel_capacity: number;              // max fuel capacity
   current_fuel: number;
-  fuel_consuption_lap: number; // fuel consumed in current lap
+  fuel_consuption_lap: number;        // fuel consumed in current lap
+
+  // RPM Info
+  rpm_flashing: number;               // indicates RPM when rev indicator starts flashing
+  rpm_hit: number;                    // indicates RPM when rev limiter is hit
 
   // Car Code
-  car_id: number;          // Internal car identifier
-  car_info: CarInfo;       // Car information based on CarInfo interface
+  car_id: number;                     // Internal car identifier
+  car_info: CarInfo;                  // Car information based on CarInfo interface
 }

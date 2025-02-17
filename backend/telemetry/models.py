@@ -93,6 +93,10 @@ class TelemetryPacket(BaseModel):
     current_position: int
     total_positions: int
 
+    # RPM Info
+    rpm_flashing: int                   # indicates RPM when rev indicator starts flashing
+    rpm_hit: int                        # indicates RPM when rev limiter is hit
+
     # Fuel Information
     fuel_percentage: float
     fuel_capacity: float                # max fuel capacity
