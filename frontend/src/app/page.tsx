@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ConnectionForm from '@/components/telemetry/ConnectionForm';
 import TelemetryDisplay from '@/components/telemetry/TelemetryDisplay';
+import RacingDisplay from '@/components/telemetry/RacingDisplay';
 import { WebSocketConnection } from '@/lib/websocket';
 import { TelemetryPacket } from '@/types/telemetry';
 

@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { TelemetryPacket } from "@/types/telemetry";
-import { Gauge, Flag, Fuel } from 'lucide-react';
+import { Gauge, Flag, Fuel, Thermometer } from 'lucide-react';
 import { formatLapTime, formatSpeed } from '@/lib/utils';
 import CarInfoDisplay from './CarInfoDisplay';
 
@@ -37,10 +36,10 @@ const RPMBar = ({ rpm, rpmFlashing, rpmHit }: { rpm: number; rpmFlashing: number
     };
     // determine if RPM is in flashing range
     const isFlashing = rpm >= rpmFlashing;
-    
+
     return (
         <div className='w-full h-2 bg-gray-800 rounded-full overflow-hidden'>
-            <div 
+            <div
                 className={`h-full ${isFlashing ? 'animate-[revFlash_0.1s_ease-in-out_infinite]' : ''}`}
                 style={{
                     width: `${Math.min(100, percentage)}%`,
@@ -97,11 +96,11 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                 const newLaps = [...prev, newLapData];
                 const newLapsLength = newLaps.length > 0 ? newLaps.length - 1 : 0;
 
-                const avgFuel = newLapsLength > 0 
-                    ? newLaps.reduce((sum, lap) => sum + lap.fuelUsed, 0) / newLapsLength 
+                const avgFuel = newLapsLength > 0
+                    ? newLaps.reduce((sum, lap) => sum + lap.fuelUsed, 0) / newLapsLength
                     : 0;
-                const avgTime = newLapsLength > 0 
-                    ? newLaps.reduce((sum, lap) => sum + lap.lapTime, 0) / newLapsLength 
+                const avgTime = newLapsLength > 0
+                    ? newLaps.reduce((sum, lap) => sum + lap.lapTime, 0) / newLapsLength
                     : 0;
 
                 setAverageFuelPerLap(avgFuel);
@@ -149,7 +148,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                 const currentTick = Date.now();
                 const elapsedSinceLastTick = currentTick - lastTickRef.current;
                 lastTickRef.current = currentTick
-                
+
                 // add new elapsed time to accumulated time
                 accumulatedTimeRef.current += elapsedSinceLastTick;
                 setCurrentLapTime(accumulatedTimeRef.current);
@@ -183,7 +182,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const currentFuel = data.current_fuel;
     const fuelCapacity = data.fuel_capacity;
     const isTrial = totalLaps == 0; // if total laps is 0 it is a time/drift trial
-    const estimatedLapsRemaining = averageFuelPerLap > 0 ? data?.fuel_percentage / averageFuelPerLap: 0;
+    const estimatedLapsRemaining = averageFuelPerLap > 0 ? data?.fuel_percentage / averageFuelPerLap : 0;
 
     return (
         <div className='space-y-4'>
@@ -191,20 +190,20 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
 
             <Card className="w-full max-w-4xl mx-auto mt-4">
                 <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Gauge className="h-5 w-5"/>
-                        Telemetry Dashboard
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm">KPH</span>
-                        <div className={`h-5 w-8 cursor-pointer rounded-full p-1 transition-colors duration-200 ${speedUnit === 'mph' ? 'bg-red-500' : 'bg-blue-500'}`} 
-                            onClick={() => setSpeedUnit(speedUnit === 'kph' ? 'mph' : 'kph')}>
-                            <div className={`h-3 w-3 rounded-full bg-white transition-transform duration-200 ${speedUnit === 'mph' ? 'translate-x-3' : 'translate-x-0'}`} />
+                    <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Gauge className="h-5 w-5" />
+                            Telemetry Dashboard
                         </div>
-                        <span className="text-sm">MPH</span>
-                    </div>
-                </CardTitle>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm">KPH</span>
+                            <div className={`h-5 w-8 cursor-pointer rounded-full p-1 transition-colors duration-200 ${speedUnit === 'mph' ? 'bg-red-500' : 'bg-blue-500'}`}
+                                onClick={() => setSpeedUnit(speedUnit === 'kph' ? 'mph' : 'kph')}>
+                                <div className={`h-3 w-3 rounded-full bg-white transition-transform duration-200 ${speedUnit === 'mph' ? 'translate-x-3' : 'translate-x-0'}`} />
+                            </div>
+                            <span className="text-sm">MPH</span>
+                        </div>
+                    </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className='flex items-center gap-2'>
@@ -247,10 +246,10 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
             </Card>
             <Card className="w-full max-w-4xl mx-auto mt-4">
                 <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Flag className="h-5 w-5"/>
-                            Lap Information
-                        </CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                        <Flag className="h-5 w-5" />
+                        Lap Information
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -264,8 +263,8 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                         </div>
                         <div className="space-y-1">
                             <p className="text-sm font-medium">Lap</p>
-                            <p className="text-2xl font-bold">{currentLap == -1 ? 
-                                'N/A' : 
+                            <p className="text-2xl font-bold">{currentLap == -1 ?
+                                'N/A' :
                                 isTrial ? currentLap : `${currentLap} / ${totalLaps}`
                             }
                             </p>
@@ -288,8 +287,8 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
             <Card className="w-full max-w-4xl mx-auto mt-4">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                            <Fuel className="h-5 w-5"/>
-                            Fuel Information
+                        <Fuel className="h-5 w-5" />
+                        Fuel Information
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -297,7 +296,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                         {/* Fuel Bar */}
                         <div className="relative w-full h-8 bg-gray-800 rounded-md overflow-hidden">
                             {/* Fuel Level Bar */}
-                            <div 
+                            <div
                                 className="absolute h-full bg-orange-400 transition-all duration-300 ease-in-out"
                                 style={{ width: `${Math.max(0, Math.min(100, fuelPercentage))}%` }}
                             />
@@ -317,7 +316,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                             </div>
                             <div className="space-y-1">
                                 <p className="text-sm font-medium">Avg. Fuel Per Lap</p>
-                                <p className="text-2xl font-bold">{averageFuelPerLap > 0 ? `${averageFuelPerLap.toFixed(1)}%` : '---'}</p>   
+                                <p className="text-2xl font-bold">{averageFuelPerLap > 0 ? `${averageFuelPerLap.toFixed(1)}%` : '---'}</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="text-sm font-medium">Estimated Laps Remaining</p>
