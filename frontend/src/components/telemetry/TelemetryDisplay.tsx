@@ -4,6 +4,7 @@ import { TelemetryPacket } from "@/types/telemetry";
 import { Gauge, Flag, Fuel, Thermometer } from 'lucide-react';
 import { formatLapTime, formatSpeed } from '@/lib/utils';
 import CarInfoDisplay from './CarInfoDisplay';
+import TyreTemperatures from './TyreTemperatures';
 
 interface TelemetryDisplayProps {
     data: TelemetryPacket | null;
@@ -326,6 +327,24 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                             </div>
                         </div>
                     </div>
+                </CardContent>
+            </Card>
+            <Card className="w-full max-w-4xl mx-auto mt-4">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Thermometer className="h-5 w-5" />
+                        Tyre Temperatures
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <TyreTemperatures
+                        temps={{
+                            fl: data.tire_temp_fl,
+                            fr: data.tire_temp_fr,
+                            rl: data.tire_temp_rl,
+                            rr: data.tire_temp_rr
+                        }}
+                    />
                 </CardContent>
             </Card>
         </div>
