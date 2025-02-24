@@ -5,7 +5,7 @@ Still very much work in progress! As of 1/5/2025, a basic dashboard has been imp
 
 ## Some Stills:
 
-<img src="docs/images/dashboard1.png" width="400" alt="Dashboard Overview in Time Trial"/> <img src="docs/images/dashboard3.png" width="400" alt="Dashboard Overview in Race 1"/><img src="docs/images/dashboard2.png" width="400" alt="Dashboard Overview in Race 2"/>
+<img src="docs/images/dashboard1.png" width="400" alt="Dashboard Overview in Time Trial"/><img src="docs/images/dashboard3.png" width="400" alt="Dashboard Overview in Race 1"/><img src="docs/images/dashboard2.png" width="400" alt="Dashboard Overview in Race 2"/>
 
 
 ## Features
