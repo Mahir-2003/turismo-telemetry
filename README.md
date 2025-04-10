@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/TurismoTelemetry-Color-1.svg" alt="Logo" width="200">
+  <img src="assets/TurismoTelemetry-Color-whitebg.svg" alt="Logo" width="200">
 </p>
 
 # Turismo Telemetry for Gran Turismo 7
