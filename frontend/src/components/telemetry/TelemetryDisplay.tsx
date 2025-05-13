@@ -333,7 +333,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                         <div className="relative w-full h-8 bg-gray-800 rounded-md overflow-hidden">
                             {/* Fuel Level Bar */}
                             <div
-                                className="absolute h-full bg-orange-400 transition-all duration-300 ease-in-out"
+                                className="absolute h-full bg-orange-400"
                                 style={{ width: `${Math.max(0, Math.min(100, fuelPercentage))}%` }}
                             />
                             {/* Percentage Text */}
