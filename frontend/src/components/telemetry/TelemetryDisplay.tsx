@@ -62,14 +62,36 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
 
     const [speedUnit, setSpeedUnit] = useState<'kph' | 'mph'>('kph');
     const prevLapRef = useRef<number>(0);
-    const startFuelRef = useRef<number>(100); // store starting fuel percentage
     const lapStartTimeRef = useRef<number>(Date.now());
     const animationFrameRef = useRef<number>();
     const accumulatedTimeRef = useRef<number>(0);
     const lastTickRef = useRef<number>(Date.now());
     const wasPausedRef = useRef<boolean>(false);
+    // fuel data
+    const startFuelRef = useRef<number>(100); // store starting fuel percentage
+    const prevFuelRef = useRef<number>(data?.fuel_percentage || 100); // prevFuelRef for accurate avgFuelPerLap calculation
+    const totalFuelConsumedRef = useRef<number>(0); // cumalative fuel used
+    const fuelAddedThisLapRef = useRef<number>(0);
 
-    // Fuel monitoring useEffect
+    // continuous fuel monitoring useEffect
+    // needed because of fuel refueling, which can happen at any point in race
+    useEffect(() => {
+        if (!data) return;
+
+        // check for refueling 
+        const current_fuel = data.fuel_percentage;
+
+        if (currentFuel > prevFuelRef.current + 0.5) {
+            const fuelAdded = currentFuel - prevFuelRef.current;
+            fuelAddedThisLapRef.current = fuelAdded;
+            console.log(`Refuel detected: +${fuelAdded.toFixed(1)}%`);
+        }
+
+        prevFuelRef.current = currentFuel;
+
+    }, [data?.fuel_percentage]); //only run when fuel percentage changes
+    
+    // lap completion useEffect
     useEffect(() => {
         if (!data) return;
 
@@ -80,42 +102,55 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
             setAverageFuelPerLap(0);
             setAverageLapTime(0);
             startFuelRef.current = data.fuel_percentage;
+            totalFuelConsumedRef.current = 0;
+            fuelAddedThisLapRef.current = 0;
+            prevFuelRef.current = data.fuel_percentage;
         }
-
         // detect lap completion
         if (data.current_lap > 0 && data.current_lap !== prevLapRef.current) {
-            const fuelUsedThisLap = startFuelRef.current - data.fuel_percentage;
 
-            // add new lap data
-            const newLapData: LapData = {
-                fuelUsed: fuelUsedThisLap,
-                lapTime: data.last_lap_time
+            const fuelUsedThisLap = (startFuelRef.current + fuelAddedThisLapRef.current) - data.fuel_percentage;
+
+            if (fuelUsedThisLap > 0) {
+                totalFuelConsumedRef.current += fuelUsedThisLap;
+
+                // add new lap data
+                const newLapData: LapData = {
+                    fuelUsed: fuelUsedThisLap,
+                    lapTime: data.last_lap_time
+                }
+
+                // update completed laps
+                setCompletedLaps(prev => {
+                    const newLaps = [...prev, newLapData];
+
+                    // calculate avg from all valid laps (exclude laps with zero fuel usage)
+                    const validLaps = newLaps.filter(lap => lap.fuelUsed > 0);
+                    const lapCount = validLaps.length;
+
+                    const avgFuel = lapCount > 0
+                        ? newLaps.reduce((sum, lap) => sum + lap.fuelUsed, 0) / lapCount
+                        : 0;
+
+                    const avgTime = lapCount > 0
+                        ? newLaps.reduce((sum, lap) => sum + lap.lapTime, 0) / lapCount
+                        : 0;
+
+                    setAverageFuelPerLap(avgFuel);
+                    setAverageLapTime(avgTime);
+
+                    return newLaps;
+                });
             }
 
-            // update completed laps
-            setCompletedLaps(prev => {
-                const newLaps = [...prev, newLapData];
-                const newLapsLength = newLaps.length > 0 ? newLaps.length - 1 : 0;
-
-                const avgFuel = newLapsLength > 0
-                    ? newLaps.reduce((sum, lap) => sum + lap.fuelUsed, 0) / newLapsLength
-                    : 0;
-                const avgTime = newLapsLength > 0
-                    ? newLaps.reduce((sum, lap) => sum + lap.lapTime, 0) / newLapsLength
-                    : 0;
-
-                setAverageFuelPerLap(avgFuel);
-                setAverageLapTime(avgTime);
-
-                return newLaps;
-            });
-
             // reset starting fuel for next lap
+            prevLapRef.current = data.current_lap;
             startFuelRef.current = data.fuel_percentage;
+            fuelAddedThisLapRef.current = 0;
         }
     }, [data?.fuel_percentage, data?.last_lap_time, data?.current_lap]);
 
-    // Lap timing useEffect
+    // lap timing useEffect
     useEffect(() => {
         if (!data) return;
 
