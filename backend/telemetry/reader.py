@@ -2,7 +2,7 @@
 import socket
 from typing import AsyncGenerator
 from loguru import logger
-from salsa20 import Salsa20_xor
+from Crypto.Cipher import Salsa20
 import asyncio
 
 from .parser import TelemetryParser
@@ -54,7 +54,9 @@ class TelemetryReader:
         IV.extend(iv2.to_bytes(4, 'little'))
         IV.extend(iv1.to_bytes(4, 'little'))
 
-        decrypted = Salsa20_xor(data, bytes(IV), KEY[0:32])
+        # decrypted = Salsa20_xor(data, bytes(IV), KEY[0:32])
+        cipher = Salsa20.new(key=KEY[:32], nonce=bytes(IV))
+        decrypted = cipher.decrypt(data)
 
         # Verify magic number
         if int.from_bytes(decrypted[0:4], byteorder='little') != 0x47375330:
