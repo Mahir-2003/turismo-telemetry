@@ -1,4 +1,5 @@
 import csv
+import urllib.request
 from pathlib import Path
 from typing import Dict, Optional
 from pydantic import BaseModel
@@ -68,9 +69,23 @@ class CarDataProcessor:
         # remove spaces and double hyphens
         url_part = url_part.replace(" ", "-").replace("'","").replace('"', "").replace("--", "-")
         return f"https://gtplus.app/_next/image?url=%2Fimages%2Fcars%2F{url_part}.jpg&w=1920&q=75"
+    
+    def _download_files(self):
+        cars_url = 'https://raw.githubusercontent.com/ddm999/gt7info/web-new/_data/db/cars.csv'
+        cars_filename = 'telemetry/data/cars.csv'
+        urllib.request.urlretrieve(cars_url, cars_filename)
+
+        maker_url = 'https://raw.githubusercontent.com/ddm999/gt7info/web-new/_data/db/maker.csv'
+        maker_filename = 'telemetry/data/maker.csv'
+        urllib.request.urlretrieve(maker_url, maker_filename)
 
     def get_car_info(self, car_id: int) -> Optional[CarInfo]:
         """Get car information by car id."""
+        # for when the cars.csv list is outdated after a new update
+        if car_id not in self._cars:
+            self._download_files() # download updated files
+            self._load_data() # reload data
+
         return self._cars.get(car_id)
 
 
