@@ -61,12 +61,15 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const [averageLapTime, setAverageLapTime] = useState<number>(0);
 
     const [speedUnit, setSpeedUnit] = useState<'kph' | 'mph'>('kph');
-    const prevLapRef = useRef<number>(0);
+    const prevLapForFuelRef = useRef<number>(0);
+    const prevLapForTimingRef = useRef<number>(0);
     const lapStartTimeRef = useRef<number>(Date.now());
     const animationFrameRef = useRef<number>();
     const accumulatedTimeRef = useRef<number>(0);
     const lastTickRef = useRef<number>(Date.now());
+    const wasOnTrackRef = useRef<boolean>(false);
     const wasPausedRef = useRef<boolean>(false);
+    const wasLoadingRef = useRef<boolean>(false);
     // fuel data
     const startFuelRef = useRef<number>(100); // store starting fuel percentage
     const prevFuelRef = useRef<number>(data?.fuel_percentage || 100); // prevFuelRef for accurate avgFuelPerLap calculation
@@ -84,7 +87,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
         if (currentFuel > prevFuelRef.current + 0.5) {
             const fuelAdded = currentFuel - prevFuelRef.current;
             fuelAddedThisLapRef.current = fuelAdded;
-            console.log(`Refuel detected: +${fuelAdded.toFixed(1)}%`);
+            // console.log(`Refuel detected: +${fuelAdded.toFixed(1)}%`);
         }
 
         prevFuelRef.current = currentFuel;
@@ -96,7 +99,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
         if (!data) return;
 
         // check for race reset/restart
-        if (data.current_lap === 1 && prevLapRef.current > 1) {
+        if (data.current_lap === 1 && prevLapForFuelRef.current > 1) {
             // reset lap/average data
             setCompletedLaps([]);
             setAverageFuelPerLap(0);
@@ -107,7 +110,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
             prevFuelRef.current = data.fuel_percentage;
         }
         // detect lap completion
-        if (data.current_lap > 0 && data.current_lap !== prevLapRef.current) {
+        if (data.current_lap > 0 && data.current_lap !== prevLapForFuelRef.current) {
 
             const fuelUsedThisLap = (startFuelRef.current + fuelAddedThisLapRef.current) - data.fuel_percentage;
 
@@ -144,7 +147,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
             }
 
             // reset starting fuel for next lap
-            prevLapRef.current = data.current_lap;
+            prevLapForFuelRef.current = data.current_lap;
             startFuelRef.current = data.fuel_percentage;
             fuelAddedThisLapRef.current = 0;
         }
@@ -154,17 +157,43 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     useEffect(() => {
         if (!data) return;
 
-        // handle lap changes
-        if (data.current_lap > 0 && data.current_lap !== prevLapRef.current) {
-            prevLapRef.current = data.current_lap;
-            lapStartTimeRef.current = Date.now();
+        // check flags for accurate 'current lap time' detection 
+        const isOnTrack = Boolean(data.flags & (1 << 0));
+        const isPaused = Boolean(data.flags & (1 << 1));
+        const isLoading = Boolean(data.flags & (1 << 2));
+
+        // handle race restart detection via loading flag
+        // if loading detected, reset the timer as it indicates a restart
+        if (isLoading && !wasLoadingRef.current) {
             accumulatedTimeRef.current = 0;
-            lastTickRef.current = Date.now();
             setCurrentLapTime(0);
+            lapStartTimeRef.current = Date.now();
+            lastTickRef.current = Date.now();
+            prevLapForTimingRef.current = 0;
         }
 
-        // check if the game is paused, in which case do not increment currentLapTime
-        const isPaused = Boolean(data.flags & (1 << 1));
+        // handle race quit detection
+        // if player was on track and now isn't, player probably quit
+        if (wasOnTrackRef.current && !isOnTrack) {
+            // thus restart lap timer state
+            accumulatedTimeRef.current = 0;
+            setCurrentLapTime(0);
+            lapStartTimeRef.current = Date.now();
+            prevLapForTimingRef.current = 0; // <--- Reset new ref
+        }
+
+        wasOnTrackRef.current = isOnTrack;
+        wasLoadingRef.current = isLoading;
+        
+        // handle lap changes only when on track
+        if (isOnTrack && data.current_lap > 0 && data.current_lap !== prevLapForTimingRef.current) {
+            accumulatedTimeRef.current = 0;
+            setCurrentLapTime(0.001);
+            lapStartTimeRef.current = Date.now();
+            lastTickRef.current = Date.now();
+            prevLapForTimingRef.current = data.current_lap;
+        }
+
 
         // handle pause state changes
         if (isPaused !== wasPausedRef.current) {
@@ -178,9 +207,9 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
             wasPausedRef.current = isPaused;
         }
 
-        // update lap time (ONLY when game is not paused)
+        // update lap time (ONLY when on track AND game is not paused)
         const updateLapTime = () => {
-            if (data.current_lap > 0 && !isPaused) {
+            if (isOnTrack && data.current_lap > 0 && !isPaused) {
                 const currentTick = Date.now();
                 const elapsedSinceLastTick = currentTick - lastTickRef.current;
                 lastTickRef.current = currentTick
@@ -223,7 +252,6 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     return (
         <div className='space-y-4'>
             <CarInfoDisplay carInfo={data.car_info} />
-
             <Card className="w-full max-w-4xl mx-auto mt-4">
                 <CardHeader>
                     <CardTitle className="flex items-center justify-between">
