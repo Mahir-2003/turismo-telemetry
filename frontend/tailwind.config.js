@@ -2,6 +2,9 @@
 module.exports = {
     darkMode: ["class"],
     content: [
+	"./pages/**/*.{js,ts,jsx,tsx,mdx}",
+	"./components/**/*.{js,ts,jsx,tsx,mdx}",
+	"./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
@@ -46,7 +49,48 @@ module.exports = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+			// turismo telemetry colors
+			'tt-blue': {
+				50: '#E6F0FF',
+				100: '#CCE0FF',
+				200: '#99C2FF',
+				300: '#66A3FF',
+				400: '#3385FF',
+				500: '#0066FF',  // primary blue
+				600: '#0052CC',
+				700: '#003D99',
+				800: '#002966',
+				900: '#001433',
+			},
+			'tt-red': {
+				50: '#FFEBEE',
+				100: '#FFCDD2',
+				200: '#EF9A9A',
+				300: '#E57373',
+				400: '#EF5350',
+				500: '#E60012',  // primary red
+				600: '#D32F2F',
+				700: '#C62828',
+				800: '#B71C1C',
+				900: '#7F0000',
+			},
+			'tt-bg': {
+				dark: '#0F1623',       // main background
+				card: '#1A202C',       // card background
+				accent: '#2D3748',     // accent background
+			},
+			'tt-text': {
+				primary: '#FFFFFF',    // primary text (white)
+				secondary: '#A7C7E7',  // secondary text (light blue)
+				muted: '#64748B',      // muted text
+			},
+			'tt-status': {
+				success: '#38A169',    // success (green)
+				warning: '#ECC94B',    // warning (yellow)
+				error: '#E53E3E',      // error (red)
+				info: '#3182CE',       // info (blue)
+			},
   		},
   		fontFamily: {
   			sans: [
