@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TelemetryPacket } from "@/types/telemetry";
 import { Gauge, Flag, Fuel, Thermometer } from 'lucide-react';
 import { formatLapTime, formatSpeed } from '@/lib/utils';
+import { COLORS, VISUALIZATION_COLORS } from '@/lib/theme';
 import CarInfoDisplay from './CarInfoDisplay';
 import TyreTemperatures from './TyreTemperatures';
 
@@ -30,16 +31,32 @@ const RPMBar = ({ rpm, rpmFlashing, rpmHit }: { rpm: number; rpmFlashing: number
 
 
     // color based on RPM percentage
+    // const getColor = (percent: number) => {
+    //     // start with green hue (120), transition to yellow (60), then red (0)
+    //     const hue = Math.max(0, 120 - (percent * 1.1)); // multipler to make red appear sooner
+    //     return `hsl(${hue}, 90%, 50%)`;
+    // };
     const getColor = (percent: number) => {
-        // start with green hue (120), transition to yellow (60), then red (0)
-        const hue = Math.max(0, 120 - (percent * 1.1)); // multipler to make red appear sooner
+        let hue;
+        if (percent < 50) {
+            // Blue to Green (210 -> 120)
+            hue = 210 - ((percent / 50) * 90);
+        } else if (percent < 75) {
+            // Green to Yellow (120 -> 60)
+            hue = 120 - ((percent - 50) / 25) * 60;
+        } else {
+            // Yellow to Red (60 -> 0)
+            hue = 60 - ((percent - 75) / 25) * 60;
+        }
         return `hsl(${hue}, 90%, 50%)`;
     };
+
+
     // determine if RPM is in flashing range
     const isFlashing = rpm >= rpmFlashing;
 
     return (
-        <div className='w-full h-2 bg-gray-800 rounded-full overflow-hidden'>
+        <div className='w-full h-2 bg-tt-bg-dark rounded-full overflow-hidden'>
             <div
                 className={`h-full ${isFlashing ? 'animate-[revFlash_0.1s_ease-in-out_infinite]' : ''}`}
                 style={{
@@ -64,7 +81,7 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     const prevLapForFuelRef = useRef<number>(0);
     const prevLapForTimingRef = useRef<number>(0);
     const lapStartTimeRef = useRef<number>(Date.now());
-    const animationFrameRef = useRef<number>();
+    const animationFrameRef = useRef<number | null>(null);
     const accumulatedTimeRef = useRef<number>(0);
     const lastTickRef = useRef<number>(Date.now());
     const wasOnTrackRef = useRef<boolean>(false);
@@ -252,20 +269,20 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
     return (
         <div className='space-y-4'>
             <CarInfoDisplay carInfo={data.car_info} />
-            <Card className="w-full max-w-4xl mx-auto mt-4">
+            <Card className="w-full max-w-4xl mx-auto mt-4 bg-tt-bg-card border-tt-bg-accent">
                 <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
+                    <CardTitle className="flex items-center justify-between text-tt-text-primary">
                         <div className="flex items-center gap-2">
-                            <Gauge className="h-5 w-5" />
+                            <Gauge className="h-5 w-5 text-tt-blue-400" />
                             Telemetry Dashboard
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-sm">KPH</span>
-                            <div className={`h-5 w-8 cursor-pointer rounded-full p-1 transition-colors duration-200 ${speedUnit === 'mph' ? 'bg-red-500' : 'bg-blue-500'}`}
+                            <span className="text-sm text-tt-text-secondary">KPH</span>
+                            <div className={`h-5 w-8 cursor-pointer rounded-full p-1 transition-colors duration-200 ${speedUnit === 'mph' ? 'bg-tt-red-500' : 'bg-tt-blue-500'}`}
                                 onClick={() => setSpeedUnit(speedUnit === 'kph' ? 'mph' : 'kph')}>
                                 <div className={`h-3 w-3 rounded-full bg-white transition-transform duration-200 ${speedUnit === 'mph' ? 'translate-x-3' : 'translate-x-0'}`} />
                             </div>
-                            <span className="text-sm">MPH</span>
+                            <span className="text-sm text-tt-text-secondary">MPH</span>
                         </div>
                     </CardTitle>
                 </CardHeader>
@@ -276,92 +293,92 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                             rpmFlashing={data.rpm_flashing}
                             rpmHit={data.rpm_hit}
                         />
-                        <span className="text-sm font-bold min-w-[80px] text-right">
+                        <span className="text-sm font-bold min-w-[80px] text-right text-tt-text-primary">
                             {Math.round(data.engine_rpm)} RPM
                         </span>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">Speed</p>
-                            <p className="text-2xl font-bold">{formattedSpeed}</p>
+                            <p className="text-sm font-medium text-tt-text-secondary">Speed</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{formattedSpeed}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">RPM</p>
-                            <p className="text-2xl font-bold">{Math.round(data.engine_rpm)}</p>
+                            <p className="text-sm font-medium text-tt-text-secondary">RPM</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{Math.round(data.engine_rpm)}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">Suggested Gear</p>
-                            <p className="text-2xl font-bold">{suggestedGear !== null ? suggestedGear : 'N/A'}</p>
+                            <p className="text-sm font-medium text-tt-text-secondary">Suggested Gear</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{suggestedGear !== null ? suggestedGear : 'N/A'}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">Throttle</p>
-                            <p className="text-2xl font-bold">{throttlePercent}%</p>
+                            <p className="text-sm font-medium text-tt-text-secondary">Throttle</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{throttlePercent}%</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">Brake</p>
-                            <p className="text-2xl font-bold">{brakePercent}%</p>
+                            <p className="text-sm font-medium text-tt-text-secondary">Brake</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{brakePercent}%</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">Gear</p>
-                            <p className="text-2xl font-bold">{data.current_gear}</p>
+                            <p className="text-sm font-medium text-tt-text-secondary">Gear</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{data.current_gear}</p>
                         </div>
                     </div>
                 </CardContent>
             </Card>
-            <Card className="w-full max-w-4xl mx-auto mt-4">
+            <Card className="w-full max-w-4xl mx-auto mt-4 bg-tt-bg-card border-tt-bg-accent">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Flag className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2 text-tt-text-primary">
+                        <Flag className="h-5 w-5 text-tt-blue-400" />
                         Lap Information
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">Position</p>
-                            <p className="text-2xl font-bold">{currentPosition == -1 ? 'N/A' : `${currentPosition} / ${totalPositions}`}</p>
+                            <p className="text-sm font-medium text-tt-text-secondary">Position</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{currentPosition == -1 ? 'N/A' : `${currentPosition} / ${totalPositions}`}</p>
                         </div>
                         <div className="space-y-1">  {/* Empty for Spacing */}
                             <p className="text-sm font-medium"></p>
                             <p className="text-2xl font-bold"></p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">Lap</p>
-                            <p className="text-2xl font-bold">{currentLap == -1 ?
+                            <p className="text-sm font-medium text-tt-text-secondary">Lap</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{currentLap == -1 ?
                                 'N/A' :
                                 isTrial ? currentLap : `${currentLap} / ${totalLaps}`
                             }
                             </p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">Last Lap</p>
-                            <p className="text-2xl font-bold">{formatLapTime(data.last_lap_time)}</p>
+                            <p className="text-sm font-medium text-tt-text-secondary">Last Lap</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{formatLapTime(data.last_lap_time)}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">Current Lap</p>
-                            <p className="text-2xl font-bold">{formatLapTime(currentLapTime)}</p>
+                            <p className="text-sm font-medium text-tt-text-secondary">Current Lap</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{formatLapTime(currentLapTime)}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">Best Lap</p>
-                            <p className="text-2xl font-bold">{formatLapTime(data.best_lap_time)}</p>
+                            <p className="text-sm font-medium text-tt-text-secondary">Best Lap</p>
+                            <p className="text-2xl font-bold text-tt-text-primary">{formatLapTime(data.best_lap_time)}</p>
                         </div>
                     </div>
                 </CardContent>
             </Card>
-            <Card className="w-full max-w-4xl mx-auto mt-4">
+            <Card className="w-full max-w-4xl mx-auto mt-4 bg-tt-bg-card border-tt-bg-accent">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Fuel className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2 text-tt-text-primary">
+                        <Fuel className="h-5 w-5 text-tt-blue-400" />
                         Fuel Information
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         {/* Fuel Bar */}
-                        <div className="relative w-full h-8 bg-gray-800 rounded-md overflow-hidden">
+                        <div className="relative w-full h-8 bg-tt-bg-dark rounded-md overflow-hidden">
                             {/* Fuel Level Bar */}
                             <div
-                                className="absolute h-full bg-orange-400"
+                                className="absolute h-full bg-gradient-to-r from-tt-red-500 to-tt-blue-400"
                                 style={{ width: `${Math.max(0, Math.min(100, fuelPercentage))}%` }}
                             />
                             {/* Percentage Text */}
@@ -373,18 +390,18 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <div className="space-y-1">
-                                <p className="text-sm font-medium">Current Fuel</p>
-                                <p className="text-2xl font-bold">
+                                <p className="text-sm font-medium text-tt-text-secondary">Current Fuel</p>
+                                <p className="text-2xl font-bold text-tt-text-primary">
                                     {currentFuel.toFixed(1)} / {fuelCapacity.toFixed(1)} L
                                 </p>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-sm font-medium">Avg. Fuel Per Lap</p>
-                                <p className="text-2xl font-bold">{averageFuelPerLap > 0 ? `${averageFuelPerLap.toFixed(1)}%` : '---'}</p>
+                                <p className="text-sm font-medium text-tt-text-secondary">Avg. Fuel Per Lap</p>
+                                <p className="text-2xl font-bold text-tt-text-primary">{averageFuelPerLap > 0 ? `${averageFuelPerLap.toFixed(1)}%` : '---'}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-sm font-medium">Estimated Laps Remaining</p>
-                                <p className="text-2xl font-bold">
+                                <p className="text-sm font-medium text-tt-text-secondary">Estimated Laps Remaining</p>
+                                <p className="text-2xl font-bold text-tt-text-primary">
                                     {estimatedLapsRemaining.toFixed(1)}
                                 </p>
                             </div>
@@ -392,10 +409,10 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                     </div>
                 </CardContent>
             </Card>
-            <Card className="w-full max-w-4xl mx-auto mt-4">
+            <Card className="w-full max-w-4xl mx-auto mt-4 bg-tt-bg-card border-tt-bg-accent">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Thermometer className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2 text-tt-text-primary">
+                        <Thermometer className="h-5 w-5 text-tt-blue-400"/>
                         Tyre Temperatures
                     </CardTitle>
                 </CardHeader>

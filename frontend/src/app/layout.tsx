@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "@/context/ThemeProvider";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,9 +25,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+    <html lang="en" className="dark">
+      <body className={`${geistSans.variable} ${geistMono.variable} bb-tt-bg-dark text-tt-text-primary`}>
+        <ThemeProvider>
+          {children}
+          <ThemeToggle />
+        </ThemeProvider>
       </body>
     </html>
   );

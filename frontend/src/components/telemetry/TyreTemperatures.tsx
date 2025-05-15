@@ -30,7 +30,7 @@ const TyreTemperatures = ({ temps }: TyreTempsProps) => {
         } else {
             hue = 0; // hot
         }
-        
+
         // Adjust saturation and lightness based on temperature
         const saturation = 85;
         const lightness = 45 + adjust;
@@ -56,9 +56,9 @@ const TyreTemperatures = ({ temps }: TyreTempsProps) => {
                 transition: 'all 500ms ease-in-out',
             }}
             >
-                <div className="text-white text-2xl font-bold">{temp.toFixed(1)}°</div>
+                <div className="text-tt-text-primary text-2xl font-bold">{temp.toFixed(1)}°</div>
             </div>
-            <span className="text-sm font-medium">{position}</span>
+            <span className="text-sm font-medium text-tt-text-secondary">{position}</span>
         </div>
     );
 

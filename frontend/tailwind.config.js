@@ -77,7 +77,7 @@ module.exports = {
 			},
 			'tt-bg': {
 				dark: '#0F1623',       // main background
-				card: '#1A202C',       // card background
+				card: '#0B0E13',       // card background
 				accent: '#2D3748',     // accent background
 			},
 			'tt-text': {

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/card';
 import { CarInfo } from '@/types/telemetry';
+import { COLORS } from '@/lib/theme';
 
 interface CarInfoDisplayProps {
     carInfo: CarInfo | null;
@@ -11,7 +12,7 @@ const CarInfoDisplay = ({ carInfo }: CarInfoDisplayProps) => {
 
     return (
         <div className="w-full max-w-4xl mx-auto mb-4">
-            <Card className="w-fit">
+            <Card className="w-fit bg-tt-bg-card border-tt-bg-accent">
                 <CardContent className="py-4">
                     <div className="flex items-center gap-4">
                         {/* Car Image */}
@@ -29,10 +30,10 @@ const CarInfoDisplay = ({ carInfo }: CarInfoDisplayProps) => {
                         
                         {/* Car Information */}
                         <div className="pr-6">
-                            <h3 className="text-xl font-bold tracking-tight">
+                            <h3 className="text-xl font-bold tracking-tight text-tt-text-primary">
                                 {carInfo.maker_name}
                             </h3>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-tt-text-secondary">
                                 {carInfo.name}
                             </p>
                         </div>

@@ -9,7 +9,7 @@ body {
 }
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -33,6 +33,7 @@ a {
 
 @layer base {
   :root {
+    /* base shadcn-ui colors */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -58,6 +59,42 @@ a {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+
+    /* Turismo Telemtry custom colors */
+    --tt-blue-50: #E6F0FF;
+    --tt-blue-100: #CCE0FF;
+    --tt-blue-200: #99C2FF;
+    --tt-blue-300: #66A3FF;
+    --tt-blue-400: #3385FF;
+    --tt-blue-500: #0066FF;
+    --tt-blue-600: #0052CC;
+    --tt-blue-700: #003D99;
+    --tt-blue-800: #002966;
+    --tt-blue-900: #001433;
+    
+    --tt-red-50: #FFEBEE;
+    --tt-red-100: #FFCDD2;
+    --tt-red-200: #EF9A9A;
+    --tt-red-300: #E57373;
+    --tt-red-400: #EF5350;
+    --tt-red-500: #E60012;
+    --tt-red-600: #D32F2F;
+    --tt-red-700: #C62828;
+    --tt-red-800: #B71C1C;
+    --tt-red-900: #7F0000;
+    
+    --tt-bg-dark: #0F1623;
+    --tt-bg-card: #1A202C;
+    --tt-bg-accent: #2D3748;
+    
+    --tt-text-primary: #FFFFFF;
+    --tt-text-secondary: #A7C7E7;
+    --tt-text-muted: #64748B;
+    
+    --tt-status-success: #38A169;
+    --tt-status-warning: #ECC94B;
+    --tt-status-error: #E53E3E;
+    --tt-status-info: #3182CE;
   }
   .dark {
     --background: 222.2 84% 4.9%;
@@ -92,6 +129,35 @@ a {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-tt-bg-dark text-tt-text-primary;
+  }
+}
+
+/* telemetry-specific styles */
+@layer components {
+  .tt-card {
+    @apply bg-tt-bg-card border border-tt-bg-accent rounded-lg shadow-md;
+  }
+  
+  .tt-card-header {
+    @apply border-b border-tt-bg-accent px-4 py-3;
+  }
+  
+  .tt-primary-button {
+    @apply bg-tt-blue-500 hover:bg-tt-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200;
+  }
+  
+  .tt-secondary-button {
+    @apply bg-tt-bg-accent hover:bg-tt-bg-card text-tt-text-secondary font-medium py-2 px-4 rounded-md transition-colors duration-200 border border-tt-bg-accent;
+  }
+  
+  .tt-danger-button {
+    @apply bg-tt-red-500 hover:bg-tt-red-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200;
+  }
+
+  /* animation for RPM flashing */
+  @keyframes revFlash {
+    0%, 100% { background-color: var(--tt-red-500); }
+    50% { background-color: var(--tt-blue-400); }
   }
 }
