@@ -1,11 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TelemetryPacket } from "@/types/telemetry";
-import { Gauge, Flag, Fuel, Thermometer } from 'lucide-react';
+import {
+    Activity, Droplet, Clock, ChevronRight, RotateCw,
+    Zap, Gauge, Flag, Fuel, Thermometer
+} from 'lucide-react';
 import { formatLapTime, formatSpeed } from '@/lib/utils';
 import { COLORS, VISUALIZATION_COLORS } from '@/lib/theme';
 import CarInfoDisplay from './CarInfoDisplay';
 import TyreTemperatures from './TyreTemperatures';
+
+interface CircularGaugeProps {
+  value: number;
+  max: number;
+  title: string;
+  unit: string;
+  icon: React.ReactNode;
+  colorClass?: string;
+}
 
 interface TelemetryDisplayProps {
     data: TelemetryPacket | null;
@@ -43,7 +55,7 @@ const RPMBar = ({ rpm, rpmFlashing, rpmHit }: { rpm: number; rpmFlashing: number
     const isFlashing = rpm >= rpmFlashing;
 
     return (
-        <div className='w-full h-2 bg-tt-bg-dark rounded-full overflow-hidden'>
+        <div className='w-full h-2 bg-tt-bg-dark rounded-full overflow-hidden relative'>
             <div
                 className={`h-full ${isFlashing ? 'animate-[revFlash_0.1s_ease-in-out_infinite]' : ''}`}
                 style={{
@@ -53,11 +65,80 @@ const RPMBar = ({ rpm, rpmFlashing, rpmHit }: { rpm: number; rpmFlashing: number
             />
         </div>
     );
-
-
 }
 
-const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => {
+const CircularGauge = ({ value, max, title, unit, icon, colorClass = "text-tt-blue-400" }: CircularGaugeProps) => {
+  const percentage = (value / max) * 100;
+  const circumference = 2 * Math.PI * 38; // r = 38
+  const offset = circumference - (percentage / 100) * circumference;
+  
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-24 h-24">
+        {/* Background circle */}
+        <svg className="w-full h-full" viewBox="0 0 100 100">
+          <circle 
+            cx="50" 
+            cy="50" 
+            r="38" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="8"
+            className="text-tt-bg-accent opacity-30"
+          />
+          {/* Foreground circle */}
+          <circle 
+            cx="50" 
+            cy="50" 
+            r="38" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="8"
+            className={colorClass}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            transform="rotate(-90 50 50)"
+          />
+        </svg>
+        
+        {/* Icon */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {icon}
+        </div>
+      </div>
+      
+      <div className="mt-2 text-center">
+        <p className="text-tt-text-secondary text-xs font-medium">{title}</p>
+        <p className="text-tt-text-primary text-lg font-bold">{value} <span className="text-xs text-tt-text-secondary">{unit}</span></p>
+      </div>
+    </div>
+  );
+};
+
+// Throttle/Brake Bar
+const PedalBar = ({ value, type }: { value: number; type: 'throttle' | 'brake' }) => {
+    const percent = (value / 255) * 100;
+    const barColor = type === 'throttle' ? 'bg-tt-blue-500' : 'bg-tt-red-500';
+
+    return (
+        <div className='flex items-center'>
+            <div className='w-16 flex justify-end'>
+                <span className='text-xs text-tt-text-secondary'>{type === 'throttle' ? 'T' : 'B'}</span>
+            </div>
+            <div className='w-full h-3 bg-tt-bg-dark rounded-md overflow-hidden mx-2'>
+                <div
+                    className={`h-full ${barColor}`}
+                    style={{ width: `${percent}%` }}
+                />
+            </div>
+            <div className="text-xs w-12 text-right">
+                {percent.toFixed(0)}%
+            </div>
+        </div>
+    );
+};
+
+const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => {
     // states for tracking lap data
     const [currentLapTime, setCurrentLapTime] = useState<number>(0);
     const [completedLaps, setCompletedLaps] = useState<LapData[]>([]);
@@ -254,173 +335,106 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
     const estimatedLapsRemaining = averageFuelPerLap > 0 ? data?.fuel_percentage / averageFuelPerLap : 0;
 
     return (
-        <div className='space-y-4'>
-            <CarInfoDisplay carInfo={data.car_info} />
-            <Card className="w-full max-w-4xl mx-auto mt-4 bg-tt-bg-card border-tt-bg-accent">
-                <CardHeader>
-                    <CardTitle className="flex items-center justify-between text-tt-text-primary">
-                        <div className="flex items-center gap-2">
-                            <Gauge className="h-5 w-5 text-tt-blue-400" />
-                            Telemetry Dashboard
-                            {isDevMode && (
-                                <span className="text-xs font-semibold px-2 py-0.5 bg-green-500/20 text-green-600 dark:text-green-400 rounded-full">
-                                    DEV MODE
-                                </span>
-                            )}
+        // <div className="w-full max-w-7xl mx-auto rounded-lg overflow-hidden bg-tt-bg-dark text-tt-text-primary p-4">
+        <div className="w-full mx-auto rounded-lg overflow-hidden bg-tt-bg-dark text-tt-text-primary p-4">
+            {/* main dashboard area, grid layout */}
+            <div className='grid grid-cols-12 gap-4'>
+                {/* left column with primary engine data */}
+                <div className='col-span-8 space-y-4'>
+                    <div className='bg-tt-bg-card rounded-lg p-4'>
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-md font-medium text-tt-text-secondary flex items-center">
+                                <Zap className="w-4 h-4 mr-1 text-tt-red-400" /> ENGINE
+                            </h3>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm text-tt-text-secondary">KPH</span>
-                            <div className={`h-5 w-8 cursor-pointer rounded-full p-1 transition-colors duration-200 ${speedUnit === 'mph' ? 'bg-tt-red-500' : 'bg-tt-blue-500'}`}
-                                onClick={() => setSpeedUnit(speedUnit === 'kph' ? 'mph' : 'kph')}>
-                                <div className={`h-3 w-3 rounded-full bg-white transition-transform duration-200 ${speedUnit === 'mph' ? 'translate-x-3' : 'translate-x-0'}`} />
-                            </div>
-                            <span className="text-sm text-tt-text-secondary">MPH</span>
-                        </div>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className='flex items-center gap-2'>
-                        <RPMBar
-                            rpm={data.engine_rpm}
-                            rpmFlashing={data.rpm_flashing}
-                            rpmHit={data.rpm_hit}
-                        />
-                        <span className="text-sm font-bold min-w-[80px] text-right text-tt-text-primary">
-                            {Math.round(data.engine_rpm)} RPM
-                        </span>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">Speed</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{formattedSpeed}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">RPM</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{Math.round(data.engine_rpm)}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">Suggested Gear</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{suggestedGear !== null ? suggestedGear : 'N/A'}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">Throttle</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{throttlePercent}%</p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">Brake</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{brakePercent}%</p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">Gear</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{data.current_gear}</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-            <Card className="w-full max-w-4xl mx-auto mt-4 bg-tt-bg-card border-tt-bg-accent">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-tt-text-primary">
-                        <Flag className="h-5 w-5 text-tt-blue-400" />
-                        Lap Information
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">Position</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{currentPosition == -1 ? 'N/A' : `${currentPosition} / ${totalPositions}`}</p>
-                        </div>
-                        <div className="space-y-1">  {/* Empty for Spacing */}
-                            <p className="text-sm font-medium"></p>
-                            <p className="text-2xl font-bold"></p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">Lap</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{currentLap == -1 ?
-                                'N/A' :
-                                isTrial ? currentLap : `${currentLap} / ${totalLaps}`
-                            }
-                            </p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">Last Lap</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{formatLapTime(data.last_lap_time)}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">Current Lap</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{formatLapTime(currentLapTime)}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-tt-text-secondary">Best Lap</p>
-                            <p className="text-2xl font-bold text-tt-text-primary">{formatLapTime(data.best_lap_time)}</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-            <Card className="w-full max-w-4xl mx-auto mt-4 bg-tt-bg-card border-tt-bg-accent">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-tt-text-primary">
-                        <Fuel className="h-5 w-5 text-tt-blue-400" />
-                        Fuel Information
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        {/* Fuel Bar */}
-                        <div className="relative w-full h-8 bg-tt-bg-dark rounded-md overflow-hidden">
-                            {/* Fuel Level Bar */}
-                            <div
-                                className="absolute h-full bg-gradient-to-r from-tt-red-500 to-tt-blue-400"
-                                style={{ width: `${Math.max(0, Math.min(100, fuelPercentage))}%` }}
+                        {/* RPM BAR */}
+                        <div className='flex items-center gap-2'>
+                            <RPMBar
+                                rpm={data.engine_rpm}
+                                rpmFlashing={data.rpm_flashing}
+                                rpmHit={data.rpm_hit}
                             />
-                            {/* Percentage Text */}
-                            <div className="absolute inset-0 flex items-center justify-end pr-2">
-                                <span className="text-white font-bold">
-                                    {fuelPercentage.toFixed(1)}%
-                                </span>
-                            </div>
+                            <span className="text-sm font-bold min-w-[80px] text-right text-tt-text-primary">
+                                {Math.round(data.engine_rpm)} RPM
+                            </span>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-tt-text-secondary">Current Fuel</p>
-                                <p className="text-2xl font-bold text-tt-text-primary">
-                                    {currentFuel.toFixed(1)} / {fuelCapacity.toFixed(1)} L
-                                </p>
+                        {/* <div className="col-span-3 space-y-3"> */}
+                        <div className="grid grid-cols-3 mt-6 gap-20">
+                            {/* Speed + Gear Telemetry */}
+                            <div className="text-center">
+                                <p className="text-xs text-tt-text-secondary">SPEED</p>
+                                <p className="text-2xl font-bold">{(data.speed_mps * 3.6).toFixed(1)}</p>
+                                <p className="text-xs text-tt-text-secondary">KPH</p>
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-tt-text-secondary">Avg. Fuel Per Lap</p>
-                                <p className="text-2xl font-bold text-tt-text-primary">{averageFuelPerLap > 0 ? `${averageFuelPerLap.toFixed(1)}%` : '---'}</p>
+                            <div className="text-center relative">
+                                <p className="text-xs text-tt-text-secondary">GEAR</p>
+                                <p className="text-7xl font-bold">{data.current_gear}</p>
+                                {data.suggested_gear !== data.current_gear && (
+                                    <div className="absolute -right-1 bottom-1 bg-tt-red-500 text-white text-sm font-bold rounded px-1.5 py-0.5 shadow-md">
+                                        {data.suggested_gear}
+                                    </div>
+                                )}
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-tt-text-secondary">Estimated Laps Remaining</p>
-                                <p className="text-2xl font-bold text-tt-text-primary">
-                                    {estimatedLapsRemaining.toFixed(1)}
-                                </p>
+                            {/* Throttle and Brake Horizontal Bars */}
+                            <div className="space-y-4 pt-4">
+                                <PedalBar value={data.throttle} type="throttle" />
+                                <PedalBar value={data.brake} type="brake" />
                             </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
-            <Card className="w-full max-w-4xl mx-auto mt-4 bg-tt-bg-card border-tt-bg-accent">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-tt-text-primary">
-                        <Thermometer className="h-5 w-5 text-tt-blue-400"/>
-                        Tyre Temperatures
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <TyreTemperatures
-                        temps={{
-                            fl: data.tire_temp_fl,
-                            fr: data.tire_temp_fr,
-                            rl: data.tire_temp_rl,
-                            rr: data.tire_temp_rr
-                        }}
-                    />
-                </CardContent>
-            </Card>
+                    {/* Lap Info and Position */}
+                    <div className='bg-tt-bg-card rounded-lg p-4'>
+
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-md font-medium text-tt-text-secondary flex items-center">
+                                <Flag className="w-4 h-4 mr-1 text-tt-blue-400" /> RACE INFO
+                            </h3>
+                        </div>
+
+                        <div className="flex items-center justify-center my-2">
+                            <div className="text-center bg-tt-bg-dark rounded-xl px-8 py-3">
+                                <div className="flex items-center justify-center gap-8">
+                                    {/* Position */}
+                                    <div className="w-32 flex flex-col items-center">
+                                        <p className="text-md text-tt-text-secondary">POSITION</p>
+                                        <div className="flex items-baseline justify-center">
+                                            <span className="text-4xl font-bold text-tt-blue-400">{data.current_position}</span>
+                                            <span className="text-lg text-tt-text-secondary">/{data.total_positions}</span>
+                                        </div>
+                                    </div>
+                                    {/* Divider */}
+                                    <div className="h-12 w-px bg-tt-bg-accent opacity-40 mx-4" />
+                                    {/* Laps */}
+                                    <div className="w-32 flex flex-col items-center">
+                                        <p className="text-md text-tt-text-secondary">LAP</p>
+                                        <div className="flex items-baseline justify-center">
+                                            <span className="text-4xl font-bold text-tt-red-400">{data.current_lap}</span>
+                                            <span className="text-lg text-tt-text-secondary">/{data.total_laps}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Lap Times */}
+                        <div className="grid grid-cols-3 gap-4 mt-3">
+                            <div className="text-center">
+                                <p className="text-md text-tt-text-secondary">LAST LAP</p>
+                                <p className="text-xl font-mono font-bold">{formatLapTime(data.last_lap_time)}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-md text-tt-text-secondary">CURRENT</p>
+                                <p className="text-xl font-mono font-bold text-tt-blue-400">{formatLapTime(currentLapTime)}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-md text-tt-text-secondary">BEST</p>
+                                <p className="text-xl font-mono font-bold text-tt-status-success">{formatLapTime(data.best_lap_time)}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
 
-export default TelemetryDisplay;
+export default StandardDisplay;

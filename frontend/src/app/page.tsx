@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ConnectionForm from '@/components/telemetry/ConnectionForm';
 import TelemetryDisplay from '@/components/telemetry/TelemetryDisplay';
+import StandardDisplay from '@/components/telemetry/StandardDisplay';
+import RacingDisplay from '@/components/telemetry/RacingDisplay';
 import { WebSocketConnection } from '@/lib/websocket';
 import { TelemetryPacket } from '@/types/telemetry';
 import { useTheme } from '@/context/ThemeProvider';
@@ -148,7 +150,9 @@ export default function Home() {
   }, [wsConnection, isDevMode]);
 
 return (
-    <main className="container mx-auto p-4 space-y-6">
+    // <main className="container mx-auto p-4 space-y-6">
+    <main className="w-full p-4 space-y-6">
+    <div className="container mx-auto"></div>
       <div className="flex flex-col items-center justify-center mb-8">
         <div className="flex items-center mb-2">
           <Image
@@ -176,6 +180,8 @@ return (
       />
       
       <TelemetryDisplay data={telemetryData} isDevMode={isDevMode} />
+      {/* <StandardDisplay data={telemetryData} isDevMode={isDevMode} /> */}
+      {/* <RacingDisplay data={telemetryData}/> */}
     </main>
   );
 }
