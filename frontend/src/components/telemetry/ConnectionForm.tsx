@@ -11,13 +11,15 @@ interface ConnectionFormProps {
     onDisconnect: () => void;
     isConnected: boolean;
     isLoading: boolean;
+    isDevMode?: boolean;
 }
 
 const ConnectionForm = ({ 
     onConnect, 
     onDisconnect, 
     isConnected,
-    isLoading 
+    isLoading,
+    isDevMode = false
 }: ConnectionFormProps) => {
     const [ip, setIp] = useState('');
 
@@ -26,7 +28,8 @@ const ConnectionForm = ({
         if (isConnected) {
             await onDisconnect();
         } else {
-            await onConnect(ip);
+            // In dev mode, we don't need an IP address
+            await onConnect(isDevMode ? '0.0.0.0' : ip);
         }
     };
 
@@ -47,16 +50,22 @@ const ConnectionForm = ({
             <CardContent>
                 <form onSubmit={handleSubmit} className='space-y-4'>
                     <div className='space-y-2'>
-                        <Input 
-                            type='text'
-                            placeholder='PlayStation IP Address'
-                            value={ip}
-                            onChange={(e) => setIp(e.target.value)}
-                            pattern="^(\d{1,3}\.){3}\d{1,3}$"
-                            required
-                            className='w-full bg-tt-bg-dark border-tt-bg-accent text-tt-text-primary'
-                            disabled={isConnected || isLoading}
-                        />
+                        {!isDevMode ? (
+                            <Input 
+                                type='text'
+                                placeholder='PlayStation IP Address'
+                                value={ip}
+                                onChange={(e) => setIp(e.target.value)}
+                                pattern="^(\d{1,3}\.){3}\d{1,3}$"
+                                required
+                                className='w-full bg-tt-bg-dark border-tt-bg-accent text-tt-text-primary'
+                                disabled={isConnected || isLoading}
+                            />
+                        ) : (
+                            <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-md text-sm text-green-600 dark:text-green-400">
+                                Using mock telemetry data in development mode
+                            </div>
+                        )}
                     </div>
                     <Button 
                         type='submit' 
@@ -77,7 +86,9 @@ const ConnectionForm = ({
                 {isConnected && (
                     <Alert className="mt-4 bg-tt-bg-dark border-tt-status-success">
                         <AlertDescription className="text-tt-text-secondary">
-                            Successfully connected to PlayStation at {ip}
+                            {isDevMode 
+                                ? 'Successfully connected to mock telemetry data stream' 
+                                : `Successfully connected to PlayStation at ${ip}`}
                         </AlertDescription>
                     </Alert>
                 )}

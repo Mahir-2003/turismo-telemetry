@@ -9,6 +9,7 @@ import TyreTemperatures from './TyreTemperatures';
 
 interface TelemetryDisplayProps {
     data: TelemetryPacket | null;
+    isDevMode?: boolean;
 }
 
 interface LapData {
@@ -70,7 +71,7 @@ const RPMBar = ({ rpm, rpmFlashing, rpmHit }: { rpm: number; rpmFlashing: number
 
 }
 
-const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
+const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => {
     // states for tracking lap data
     const [currentLapTime, setCurrentLapTime] = useState<number>(0);
     const [completedLaps, setCompletedLaps] = useState<LapData[]>([]);
@@ -99,15 +100,15 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
         if (!data) return;
 
         // check for refueling 
-        const current_fuel = data.fuel_percentage;
+        const currentFuelPercentage = data.fuel_percentage;
 
-        if (currentFuel > prevFuelRef.current + 0.5) {
-            const fuelAdded = currentFuel - prevFuelRef.current;
+        if (currentFuelPercentage > prevFuelRef.current + 0.5) {
+            const fuelAdded = currentFuelPercentage - prevFuelRef.current;
             fuelAddedThisLapRef.current = fuelAdded;
             // console.log(`Refuel detected: +${fuelAdded.toFixed(1)}%`);
         }
 
-        prevFuelRef.current = currentFuel;
+        prevFuelRef.current = currentFuelPercentage;
 
     }, [data?.fuel_percentage]); //only run when fuel percentage changes
     
@@ -275,6 +276,11 @@ const TelemetryDisplay = ({ data }: TelemetryDisplayProps) => {
                         <div className="flex items-center gap-2">
                             <Gauge className="h-5 w-5 text-tt-blue-400" />
                             Telemetry Dashboard
+                            {isDevMode && (
+                                <span className="text-xs font-semibold px-2 py-0.5 bg-green-500/20 text-green-600 dark:text-green-400 rounded-full">
+                                    DEV MODE
+                                </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-tt-text-secondary">KPH</span>

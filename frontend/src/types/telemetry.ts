@@ -2,7 +2,7 @@ export interface CarInfo {
   car_id: number;
   name: string;
   maker_id: number;
-  maker_name: number;
+  maker_name: string;
   image_url: string;
 }
 
