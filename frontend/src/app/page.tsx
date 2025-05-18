@@ -7,12 +7,17 @@ import { TelemetryPacket } from '@/types/telemetry';
 import { useTheme } from '@/context/ThemeProvider';
 import { COLORS } from '@/lib/theme';
 import Image from 'next/image';
+import DevModeToggle from '@/components/dev/DevModeToggle';
+import DevControls from '@/components/dev/DevControls';
+import mockTelemetryGenerator from '@/lib/mockTelemetry';
 
 export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
   const [telemetryData, setTelemetryData] = useState<TelemetryPacket | null>(null);
   const [wsConnection, setWsConnection] = useState<WebSocketConnection | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDevMode, setIsDevMode] = useState(false);
+  const [mockDataActive, setMockDataActive] = useState(false);
 
   // get theme context
   const { mode } = useTheme();
@@ -24,10 +29,69 @@ export default function Home() {
         wsConnection.disconnect();
         setTelemetryData(null);
       }
+      // Clean up mock data generator
+      mockTelemetryGenerator.stop();
     };
   }, [wsConnection]);
+  
+  // Initialize dev mode from localStorage
+  useEffect(() => {
+    const savedDevMode = localStorage.getItem('turismoTelemetryDevMode');
+    if (savedDevMode === 'true') {
+      setIsDevMode(true);
+    }
+  }, []);
+  
+  // Handle dev mode toggle
+  useEffect(() => {
+    if (isDevMode) {
+      // Start mock data generator and subscribe to updates
+      mockTelemetryGenerator.start();
+      setMockDataActive(true);
+      
+      // If real connection exists, disconnect it
+      if (wsConnection) {
+        wsConnection.disconnect();
+        setWsConnection(null);
+      }
+    } else {
+      // Stop mock data generator
+      mockTelemetryGenerator.stop();
+      setMockDataActive(false);
+      
+      // Clear any existing mock data if dev mode is disabled
+      if (!isConnected) {
+        setTelemetryData(null);
+      }
+    }
+    
+    return () => {
+      if (!isDevMode) {
+        // Cleanup mock data subscription when dev mode is disabled
+        mockTelemetryGenerator.stop();
+      }
+    };
+  }, [isDevMode, wsConnection, isConnected]);
+  
+  // Subscribe to mock telemetry data
+  useEffect(() => {
+    if (isDevMode) {
+      const unsubscribe = mockTelemetryGenerator.subscribe((mockData) => {
+        setTelemetryData(mockData);
+      });
+      
+      return unsubscribe;
+    }
+  }, [isDevMode]);
 
   const handleConnect = useCallback(async (psIP: string) => {
+    // If in dev mode, don't try to connect to a real PS5
+    if (isDevMode) {
+      setIsConnected(true);
+      setMockDataActive(true);
+      return;
+    }
+    
     try {
       setIsLoading(true);
       setTelemetryData(null);
@@ -55,10 +119,20 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [wsConnection]);
+  }, [wsConnection, isDevMode]);
 
   const handleDisconnect = useCallback(async () => {
     setIsLoading(true);
+    
+    // Handle mock data disconnection
+    if (isDevMode) {
+      setIsConnected(false);
+      setTelemetryData(null);
+      setMockDataActive(false);
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       if (wsConnection) {
         await wsConnection.disconnect();
@@ -71,7 +145,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [wsConnection]);
+  }, [wsConnection, isDevMode]);
 
 return (
     <main className="container mx-auto p-4 space-y-6">
@@ -86,14 +160,22 @@ return (
         </div>
       </div>
       
+      <DevModeToggle 
+        isDevMode={isDevMode}
+        onToggle={setIsDevMode}
+      />
+      
+      <DevControls isVisible={isDevMode && mockDataActive} />
+      
       <ConnectionForm 
         onConnect={handleConnect}
         onDisconnect={handleDisconnect}
         isConnected={isConnected}
         isLoading={isLoading}
+        isDevMode={isDevMode}
       />
       
-      <TelemetryDisplay data={telemetryData} />
+      <TelemetryDisplay data={telemetryData} isDevMode={isDevMode} />
     </main>
   );
 }
