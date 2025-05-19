@@ -11,12 +11,12 @@ import CarInfoDisplay from './CarInfoDisplay';
 import TyreTemperatures from './TyreTemperatures';
 
 interface CircularGaugeProps {
-  value: number;
-  max: number;
-  title: string;
-  unit: string;
-  icon: React.ReactNode;
-  colorClass?: string;
+    value: string;
+    max: number;
+    title: string;
+    unit: string;
+    icon: React.ReactNode;
+    colorClass?: string;
 }
 
 interface TelemetryDisplayProps {
@@ -68,51 +68,53 @@ const RPMBar = ({ rpm, rpmFlashing, rpmHit }: { rpm: number; rpmFlashing: number
 }
 
 const CircularGauge = ({ value, max, title, unit, icon, colorClass = "text-tt-blue-400" }: CircularGaugeProps) => {
-  const percentage = (value / max) * 100;
-  const circumference = 2 * Math.PI * 38; // r = 38
-  const offset = circumference - (percentage / 100) * circumference;
-  
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-24 h-24">
-        {/* Background circle */}
-        <svg className="w-full h-full" viewBox="0 0 100 100">
-          <circle 
-            cx="50" 
-            cy="50" 
-            r="38" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="8"
-            className="text-tt-bg-accent opacity-30"
-          />
-          {/* Foreground circle */}
-          <circle 
-            cx="50" 
-            cy="50" 
-            r="38" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="8"
-            className={colorClass}
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            transform="rotate(-90 50 50)"
-          />
-        </svg>
-        
-        {/* Icon */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          {icon}
+    const percentage = (Number(value) / max) * 100;
+    const circumference = 2 * Math.PI * 42; // r = 42, increased from 38
+    const offset = circumference - (percentage / 100) * circumference;
+
+    return (
+        <div className="flex flex-col items-center">
+            <div className="relative w-32 h-32">
+                {/* Background circle */}
+                <svg className="w-full h-full" viewBox="0 0 100 100">
+                    <circle
+                        cx="50"
+                        cy="50"
+                        r="42"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        className="text-tt-bg-accent opacity-30"
+                    />
+                    {/* Foreground circle */}
+                    <circle
+                        cx="50"
+                        cy="50"
+                        r="42"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        className={colorClass}
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        transform="rotate(-90 50 50)"
+                    />
+                </svg>
+
+                {/* Icon */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="transform scale-125">
+                        {icon}
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-3 text-center">
+                <p className="text-tt-text-secondary text-lg font-medium">{title}</p>
+                <p className="text-tt-text-primary text-3xl font-bold">{value} <span className="text-2xl text-tt-text-secondary">{unit}</span></p>
+            </div>
         </div>
-      </div>
-      
-      <div className="mt-2 text-center">
-        <p className="text-tt-text-secondary text-xs font-medium">{title}</p>
-        <p className="text-tt-text-primary text-lg font-bold">{value} <span className="text-xs text-tt-text-secondary">{unit}</span></p>
-      </div>
-    </div>
-  );
+    );
 };
 
 // Throttle/Brake Bar
@@ -121,19 +123,68 @@ const PedalBar = ({ value, type }: { value: number; type: 'throttle' | 'brake' }
     const barColor = type === 'throttle' ? 'bg-tt-blue-500' : 'bg-tt-red-500';
 
     return (
-        <div className='flex items-center'>
-            <div className='w-16 flex justify-end'>
+        <div className='flex items-center w-full'>
+            <div className='w-8 flex justify-center'>
                 <span className='text-xs text-tt-text-secondary'>{type === 'throttle' ? 'T' : 'B'}</span>
             </div>
-            <div className='w-full h-3 bg-tt-bg-dark rounded-md overflow-hidden mx-2'>
+            <div className='flex-1 h-3 bg-tt-bg-dark rounded-md overflow-hidden mx-1'>
                 <div
                     className={`h-full ${barColor}`}
                     style={{ width: `${percent}%` }}
                 />
             </div>
-            <div className="text-xs w-12 text-right">
+            <div className="text-xs w-8 text-right">
                 {percent.toFixed(0)}%
             </div>
+        </div>
+    );
+};
+
+// taken straight from TyreTemperatures.tsx
+const getTemperatureHSL = (temp: number, adjust: number = 0): string => {
+    let hue: number;
+    if (temp < 60) {
+        hue = 140 - ((temp / 60) * 20);
+    } else if (temp < 80) {
+        hue = 120 - (((temp - 60) / 20) * 60);
+    } else if (temp < 100) {
+        hue = 60 - (((temp - 80) / 20) * 60);
+    } else {
+        hue = 0; // hot
+    }
+
+    const saturation = 85;
+    const lightness = 45 + adjust;
+
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+
+// Tire Component from TyreTemperatures modified for this display
+const TireTemp = ({ position, temp }: { position: string, temp: number }) => {
+    const color = getTemperatureHSL(temp);
+
+    return (
+        <div className="flex flex-col items-center">
+            <div
+                className={`w-20 h-32 rounded-lg flex items-center justify-center transition-colors transition-all duration-300 ease-in-out border-2`}
+                style={{
+                    background: `linear-gradient(to bottom,
+                        ${getTemperatureHSL(temp, 10)} 0%,
+                        ${getTemperatureHSL(temp)} 50%,
+                        ${getTemperatureHSL(temp, -10)} 100%
+                    )`,
+                    boxShadow: `
+                        0 4px 6px -1px ${getTemperatureHSL(temp, -20)}80,
+                        0 2px 4px -2px ${getTemperatureHSL(temp)}40,
+                        inset 0 2px 4px ${getTemperatureHSL(temp, 15)}40
+                    `,
+                    transition: 'all 300ms ease-in-out',
+                }}
+            >
+                <span className="text-lg font-bold">{temp.toFixed(1)}°</span>
+            </div>
+            <p className="text-sm mt-1 text-tt-text-secondary">{position}</p>
         </div>
     );
 };
@@ -178,7 +229,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
         prevFuelRef.current = currentFuelPercentage;
 
     }, [data?.fuel_percentage]); //only run when fuel percentage changes
-    
+
     // lap completion useEffect
     useEffect(() => {
         if (!data) return;
@@ -269,7 +320,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
 
         wasOnTrackRef.current = isOnTrack;
         wasLoadingRef.current = isLoading;
-        
+
         // handle lap changes only when on track
         if (isOnTrack && data.current_lap > 0 && data.current_lap !== prevLapForTimingRef.current) {
             accumulatedTimeRef.current = 0;
@@ -321,32 +372,36 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
     }
 
     const formattedSpeed = formatSpeed(data.speed_mps, speedUnit);
-    const throttlePercent = ((data.throttle / 255) * 100).toFixed(1);
-    const brakePercent = ((data.brake / 255) * 100).toFixed(1);
     const suggestedGear = data.suggested_gear !== 15 ? data.suggested_gear : null; // 15 == no suggested gear
     const currentLap = data.current_lap;
     const totalLaps = data.total_laps;
     const currentPosition = data.current_position;
     const totalPositions = data.total_positions;
     const fuelPercentage = data.fuel_percentage;
-    const currentFuel = data.current_fuel;
-    const fuelCapacity = data.fuel_capacity;
     const isTrial = totalLaps == 0; // if total laps is 0 it is a time/drift trial
     const estimatedLapsRemaining = averageFuelPerLap > 0 ? data?.fuel_percentage / averageFuelPerLap : 0;
 
     return (
         // <div className="w-full max-w-7xl mx-auto rounded-lg overflow-hidden bg-tt-bg-dark text-tt-text-primary p-4">
-        <div className="w-full mx-auto rounded-lg overflow-hidden bg-tt-bg-dark text-tt-text-primary p-4">
+        <div className="w-full mx-auto rounded-lg overflow-hidden text-tt-text-primary p-4">
             {/* main dashboard area, grid layout */}
             <div className='grid grid-cols-12 gap-4'>
-                {/* left column with primary engine data */}
+                {/* start of left column */}
                 <div className='col-span-8 space-y-4'>
                     <div className='bg-tt-bg-card rounded-lg p-4'>
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-md font-medium text-tt-text-secondary flex items-center">
-                                <Zap className="w-4 h-4 mr-1 text-tt-red-400" /> ENGINE
-                            </h3>
-                        </div>
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-md font-medium text-tt-text-secondary flex items-center">
+                                    <Zap className="w-4 h-4 mr-1 text-tt-red-400" /> ENGINE
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                <span className="text-sm text-tt-text-secondary">KPH</span>
+                                <div className={`h-5 w-8 cursor-pointer rounded-full p-1 transition-colors duration-200 ${speedUnit === 'mph' ? 'bg-tt-red-500' : 'bg-tt-blue-500'}`}
+                                    onClick={() => setSpeedUnit(speedUnit === 'kph' ? 'mph' : 'kph')}>
+                                    <div className={`h-3 w-3 rounded-full bg-white transition-transform duration-200 ${speedUnit === 'mph' ? 'translate-x-3' : 'translate-x-0'}`} />
+                                </div>
+                                <span className="text-sm text-tt-text-secondary">MPH</span>
+                            </div>
+                            </div>
                         {/* RPM BAR */}
                         <div className='flex items-center gap-2'>
                             <RPMBar
@@ -359,24 +414,24 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                             </span>
                         </div>
                         {/* <div className="col-span-3 space-y-3"> */}
-                        <div className="grid grid-cols-3 mt-6 gap-20">
+                        <div className="grid grid-cols-12 mt-6 gap-4">
                             {/* Speed + Gear Telemetry */}
-                            <div className="text-center">
-                                <p className="text-xs text-tt-text-secondary">SPEED</p>
-                                <p className="text-2xl font-bold">{(data.speed_mps * 3.6).toFixed(1)}</p>
-                                <p className="text-xs text-tt-text-secondary">KPH</p>
+                            <div className="text-center col-span-3">
+                                <p className="text-md text-tt-text-secondary">SPEED</p>
+                                <p className="text-3xl font-bold">{formattedSpeed.slice(0,formattedSpeed.length - 4)}</p>
+                                <p className="text-lg text-tt-text-secondary">{speedUnit.toUpperCase()}</p>
                             </div>
-                            <div className="text-center relative">
-                                <p className="text-xs text-tt-text-secondary">GEAR</p>
-                                <p className="text-7xl font-bold">{data.current_gear}</p>
-                                {data.suggested_gear !== data.current_gear && (
-                                    <div className="absolute -right-1 bottom-1 bg-tt-red-500 text-white text-sm font-bold rounded px-1.5 py-0.5 shadow-md">
-                                        {data.suggested_gear}
+                            <div className="text-center relative col-span-2">
+                                <p className="text-md text-tt-text-secondary">GEAR</p>
+                                <p className="text-5xl font-bold">{data.current_gear}</p>
+                                {suggestedGear && suggestedGear !== data.current_gear && (
+                                    <div className="absolute -right-1 bottom-1 bg-tt-red-500 text-white text-xs font-bold rounded px-1 py-0.5 shadow-md">
+                                        {suggestedGear}
                                     </div>
                                 )}
                             </div>
                             {/* Throttle and Brake Horizontal Bars */}
-                            <div className="space-y-4 pt-4">
+                            <div className="space-y-4 pt-4 col-span-7">
                                 <PedalBar value={data.throttle} type="throttle" />
                                 <PedalBar value={data.brake} type="brake" />
                             </div>
@@ -398,8 +453,8 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                                     <div className="w-32 flex flex-col items-center">
                                         <p className="text-md text-tt-text-secondary">POSITION</p>
                                         <div className="flex items-baseline justify-center">
-                                            <span className="text-4xl font-bold text-tt-blue-400">{data.current_position}</span>
-                                            <span className="text-lg text-tt-text-secondary">/{data.total_positions}</span>
+                                            <span className="text-4xl font-bold text-tt-blue-400">{currentPosition}</span>
+                                            <span className="text-lg text-tt-text-secondary">/{totalPositions}</span>
                                         </div>
                                     </div>
                                     {/* Divider */}
@@ -408,8 +463,16 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                                     <div className="w-32 flex flex-col items-center">
                                         <p className="text-md text-tt-text-secondary">LAP</p>
                                         <div className="flex items-baseline justify-center">
-                                            <span className="text-4xl font-bold text-tt-red-400">{data.current_lap}</span>
-                                            <span className="text-lg text-tt-text-secondary">/{data.total_laps}</span>
+                                            {currentLap == -1 ? (
+                                                <span className="text-4xl font-bold text-tt-red-400">N/A</span>
+                                            ) : isTrial ? (
+                                                <span className="text-4xl font-bold text-tt-red-400">{currentLap}</span>
+                                            ) : (
+                                                <>
+                                                    <span className="text-4xl font-bold text-tt-red-400">{currentLap}</span>
+                                                    <span className="text-lg text-tt-text-secondary">/{totalLaps}</span>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -431,6 +494,99 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                             </div>
                         </div>
                     </div>
+
+                    <div className="bg-tt-bg-card rounded-lg p-4">
+                        <div className="flex items-center mb-2">
+                            <Thermometer className="w-4 h-4 mr-1 text-tt-blue-400" />
+                            <h3 className="text-md font-medium text-tt-text-secondary">TIRE TEMPERATURES</h3>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-8 py-2">
+                            <div className="flex justify-center">
+                                <TireTemp position="FRONT LEFT" temp={data.tire_temp_fl} />
+                            </div>
+                            <div className="flex justify-center">
+                                <TireTemp position="FRONT RIGHT" temp={data.tire_temp_fr} />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-8 py-2">
+                            <div className="flex justify-center">
+                                <TireTemp position="REAR LEFT" temp={data.tire_temp_rl} />
+                            </div>
+                            <div className="flex justify-center">
+                                <TireTemp position="REAR RIGHT" temp={data.tire_temp_rr} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* end of left column */}
+                {/* start of right column */}
+                <div className="col-span-4 space-y-4">
+                    <CarInfoDisplay carInfo={data.car_info} type={2} />
+                    {/* Fuel Gauge */}
+                    <div className="bg-tt-bg-card rounded-lg p-4">
+                        <div className="flex items-center mb-2">
+                            <Droplet className="w-4 h-4 mr-1 text-tt-red-600" />
+                            <h3 className="text-md font-medium text-tt-text-secondary">FUEL STATUS</h3>
+                        </div>
+
+                        <div className="flex items-center gap-8">
+                            {/* Left side - Stacked info */}
+                            <div className="flex flex-col space-y-4 px-4">
+                                <div>
+                                    <p className="text-md text-tt-text-secondary mb-1">CONSUMPTION</p>
+                                    <p className="text-lg font-medium text-tt-text-primary">{averageFuelPerLap > 0 ? `${averageFuelPerLap.toFixed(1)}% / lap` : '---'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-md text-tt-text-secondary mb-1">ESTIMATED</p>
+                                    <p className="text-lg font-medium text-tt-text-primary">{estimatedLapsRemaining.toFixed(1)} laps</p>
+                                </div>
+                            </div>
+                            
+                            {/* Circular gauge */}
+                            <div className="flex ml-20">
+                                <CircularGauge
+                                    value={fuelPercentage.toFixed(1)}
+                                    max={100}
+                                    title="REMAINING"
+                                    unit="%"
+                                    icon={<Droplet className="h-6 w-6 text-tt-red-600"/>}
+                                    colorClass={"text-tt-red-400"}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    {/* Vehicle Vitals */}
+          <div className="bg-tt-bg-card rounded-lg p-4">
+            <div className="flex items-center mb-3">
+              <Activity className="w-4 h-4 mr-1 text-tt-blue-400" />
+              <h3 className="text-md font-medium text-tt-text-secondary">VEHICLE VITALS</h3>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-tt-bg-dark rounded-md p-2">
+                <p className="text-sm text-tt-text-secondary">WATER TEMP</p>
+                <p className={`text-lg font-bold`}>{data.water_temp}°C</p>
+              </div>
+              
+              <div className="bg-tt-bg-dark rounded-md p-2">
+                <p className="text-sm text-tt-text-secondary">OIL TEMP</p>
+                <p className={`text-lg font-bold`}>{data.oil_temp}°C</p>
+              </div>
+              
+              <div className="bg-tt-bg-dark rounded-md p-2">
+                <p className="text-sm text-tt-text-secondary">OIL PRESSURE</p>
+                <p className="text-lg font-bold text-tt-text-primary">{data.oil_pressure} bar</p>
+              </div>
+              
+              <div className="bg-tt-bg-dark rounded-md p-2">
+                <p className="text-sm text-tt-text-secondary">RIDE HEIGHT</p>
+                <p className="text-lg font-bold text-tt-text-primary">{(data.body_height * 1000).toFixed(0)} mm</p>
+              </div>
+            </div>
+            </div>
+                
                 </div>
             </div>
         </div>
