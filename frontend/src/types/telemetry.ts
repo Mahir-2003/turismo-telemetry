@@ -120,7 +120,7 @@ export interface TelemetryPacket {
   fuel_percentage: number;
   fuel_capacity: number;              // max fuel capacity
   current_fuel: number;
-  fuel_consuption_lap: number;        // fuel consumed in current lap
+  fuel_consumption_lap: number;        // fuel consumed in current lap
 
   // RPM Info
   rpm_flashing: number;               // indicates RPM when rev indicator starts flashing

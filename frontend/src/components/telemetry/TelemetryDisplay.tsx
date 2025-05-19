@@ -3,7 +3,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TelemetryPacket } from "@/types/telemetry";
 import { Gauge, Flag, Fuel, Thermometer } from 'lucide-react';
 import { formatLapTime, formatSpeed } from '@/lib/utils';
-import { COLORS, VISUALIZATION_COLORS } from '@/lib/theme';
 import CarInfoDisplay from './CarInfoDisplay';
 import TyreTemperatures from './TyreTemperatures';
 
