@@ -6,9 +6,7 @@ import {
     Zap, Gauge, Flag, Fuel, Thermometer
 } from 'lucide-react';
 import { formatLapTime, formatSpeed } from '@/lib/utils';
-import { COLORS, VISUALIZATION_COLORS } from '@/lib/theme';
 import CarInfoDisplay from './CarInfoDisplay';
-import TyreTemperatures from './TyreTemperatures';
 
 interface CircularGaugeProps {
     value: string;
@@ -199,10 +197,10 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
     const [speedUnit, setSpeedUnit] = useState<'kph' | 'mph'>('kph');
     const prevLapForFuelRef = useRef<number>(0);
     const prevLapForTimingRef = useRef<number>(0);
-    const lapStartTimeRef = useRef<number>(Date.now());
+    const lapStartTimeRef = useRef<number>(0);
     const animationFrameRef = useRef<number | null>(null);
     const accumulatedTimeRef = useRef<number>(0);
-    const lastTickRef = useRef<number>(Date.now());
+    const lastTickRef = useRef<number>(0);
     const wasOnTrackRef = useRef<boolean>(false);
     const wasPausedRef = useRef<boolean>(false);
     const wasLoadingRef = useRef<boolean>(false);
@@ -211,6 +209,17 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
     const prevFuelRef = useRef<number>(data?.fuel_percentage || 100); // prevFuelRef for accurate avgFuelPerLap calculation
     const totalFuelConsumedRef = useRef<number>(0); // cumalative fuel used
     const fuelAddedThisLapRef = useRef<number>(0);
+    const isInitializedRef = useRef<boolean>(false);
+
+    // init timestamps after component mounts to avoid hydration mismatch
+    useEffect(() => {
+        if (!isInitializedRef.current) {
+            const now = Date.now();
+            lapStartTimeRef.current = now;
+            lastTickRef.current = now;
+            isInitializedRef.current = true;
+        }
+    }, []);
 
     // continuous fuel monitoring useEffect
     // needed because of fuel refueling, which can happen at any point in race
@@ -388,7 +397,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
             <div className='grid grid-cols-12 gap-4'>
                 {/* start of left column */}
                 <div className='col-span-8 space-y-4'>
-                    <div className='bg-tt-bg-card rounded-lg p-4'>
+                    <div className='bg-gray-900 rounded-lg p-4'>
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-md font-medium text-tt-text-secondary flex items-center">
                                     <Zap className="w-4 h-4 mr-1 text-tt-red-400" /> ENGINE

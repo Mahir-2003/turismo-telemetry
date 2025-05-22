@@ -66,10 +66,10 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
     const [speedUnit, setSpeedUnit] = useState<'kph' | 'mph'>('kph');
     const prevLapForFuelRef = useRef<number>(0);
     const prevLapForTimingRef = useRef<number>(0);
-    const lapStartTimeRef = useRef<number>(Date.now());
+    const lapStartTimeRef = useRef<number>(0);
     const animationFrameRef = useRef<number | null>(null);
     const accumulatedTimeRef = useRef<number>(0);
-    const lastTickRef = useRef<number>(Date.now());
+    const lastTickRef = useRef<number>(0);
     const wasOnTrackRef = useRef<boolean>(false);
     const wasPausedRef = useRef<boolean>(false);
     const wasLoadingRef = useRef<boolean>(false);
@@ -78,6 +78,17 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
     const prevFuelRef = useRef<number>(data?.fuel_percentage || 100); // prevFuelRef for accurate avgFuelPerLap calculation
     const totalFuelConsumedRef = useRef<number>(0); // cumalative fuel used
     const fuelAddedThisLapRef = useRef<number>(0);
+    const isInitializedRef = useRef<boolean>(false);
+
+    // init timestamps after component mounts to avoid hydration mismatch
+    useEffect(() => {
+        if (!isInitializedRef.current) {
+            const now = Date.now();
+            lapStartTimeRef.current = now;
+            lastTickRef.current = now;
+            isInitializedRef.current = true;
+        }
+    }, []);
 
     // continuous fuel monitoring useEffect
     // needed because of fuel refueling, which can happen at any point in race
