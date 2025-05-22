@@ -75,6 +75,12 @@ const CircularGauge = ({ value, max, title, unit, icon, colorClass = "text-tt-bl
             <div className="relative w-32 h-32">
                 {/* Background circle */}
                 <svg className="w-full h-full" viewBox="0 0 100 100">
+                    <defs>
+                        <linearGradient id="circularGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="var(--tt-blue-500)" />
+                            <stop offset="100%" stopColor="var(--tt-red-500)" />
+                        </linearGradient>
+                    </defs>
                     <circle
                         cx="50"
                         cy="50"
@@ -90,9 +96,8 @@ const CircularGauge = ({ value, max, title, unit, icon, colorClass = "text-tt-bl
                         cy="50"
                         r="42"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="url(#circularGradient)"
                         strokeWidth="8"
-                        className={colorClass}
                         strokeDasharray={circumference}
                         strokeDashoffset={offset}
                         transform="rotate(-90 50 50)"
@@ -108,8 +113,8 @@ const CircularGauge = ({ value, max, title, unit, icon, colorClass = "text-tt-bl
             </div>
 
             <div className="mt-3 text-center">
-                <p className="text-tt-text-secondary text-lg font-medium">{title}</p>
-                <p className="text-tt-text-primary text-3xl font-bold">{value} <span className="text-2xl text-tt-text-secondary">{unit}</span></p>
+                <p className="text-tt-text-secondary text-md font-medium">{title}</p>
+                <p className="text-tt-text-primary text-2xl font-bold">{value} <span className="text-2xl text-tt-text-secondary">{unit}</span></p>
             </div>
         </div>
     );
@@ -166,10 +171,11 @@ const TireTemp = ({ position, temp }: { position: string, temp: number }) => {
         <div className="flex flex-col items-center">
             <div
                 className={`w-20 h-32 rounded-lg flex items-center justify-center transition-colors transition-all duration-300 ease-in-out border-2`}
+                // FOR REF: transition used to be from 0% to 50% to 100%, removed gradient for consistency with rest of UI
                 style={{
                     background: `linear-gradient(to bottom,
-                        ${getTemperatureHSL(temp, 10)} 0%,
-                        ${getTemperatureHSL(temp)} 50%,
+                        ${getTemperatureHSL(temp, 10)} 100%,
+                        ${getTemperatureHSL(temp)} 100%,
                         ${getTemperatureHSL(temp, -10)} 100%
                     )`,
                     boxShadow: `
@@ -397,7 +403,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
             <div className='grid grid-cols-12 gap-4'>
                 {/* start of left column */}
                 <div className='col-span-8 space-y-4'>
-                    <div className='bg-gray-900 rounded-lg p-4'>
+                    <div className='bg-tt-bg-card rounded-lg p-4'>
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-md font-medium text-tt-text-secondary flex items-center">
                                     <Zap className="w-4 h-4 mr-1 text-tt-red-400" /> ENGINE
@@ -568,21 +574,39 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                     </div>
                     {/* Vehicle Vitals */}
           <div className="bg-tt-bg-card rounded-lg p-4">
-            <div className="flex items-center mb-3">
+            <div className="flex items-center">
               <Activity className="w-4 h-4 mr-1 text-tt-blue-400" />
               <h3 className="text-md font-medium text-tt-text-secondary">VEHICLE VITALS</h3>
             </div>
-            
+            {/* Oil and Water Bars */}
+            <div className="space-y-3 p-4">
+              <div className="bg-tt-bg-dark rounded-md p-2 flex justify-between items-center">
+                <span className="text-md text-tt-text-secondary w-14">WATER</span>
+                <div className="flex items-center gap-2 flex-1 ml-4">
+                  <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-tt-blue-500 transition-all duration-100"
+                      style={{ width: `${(data.water_temp / 120) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-md font-mono w-12 text-right">{data.water_temp.toFixed(0)}°C</span>
+                </div>
+              </div>
+              <div className="bg-tt-bg-dark rounded-md p-2 flex justify-between items-center">
+                <span className="text-md text-tt-text-secondary w-14">OIL</span>
+                <div className="flex items-center gap-2 flex-1 ml-4">
+                  <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-tt-status-warning transition-all duration-100"
+                      style={{ width: `${(data.oil_temp / 150) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-md font-mono w-12 text-right">{data.oil_temp.toFixed(0)}°C</span>
+                </div>
+              </div>
+            </div>
+            {/* Oil Pressure + Ride Height */}
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-tt-bg-dark rounded-md p-2">
-                <p className="text-sm text-tt-text-secondary">WATER TEMP</p>
-                <p className={`text-lg font-bold`}>{data.water_temp}°C</p>
-              </div>
-              
-              <div className="bg-tt-bg-dark rounded-md p-2">
-                <p className="text-sm text-tt-text-secondary">OIL TEMP</p>
-                <p className={`text-lg font-bold`}>{data.oil_temp}°C</p>
-              </div>
               
               <div className="bg-tt-bg-dark rounded-md p-2">
                 <p className="text-sm text-tt-text-secondary">OIL PRESSURE</p>
