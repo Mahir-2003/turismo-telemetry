@@ -3,8 +3,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TelemetryPacket } from "@/types/telemetry";
 import {
     Activity, Droplet, Clock, ChevronRight, RotateCw,
-    Zap, Gauge, Flag, Fuel, Thermometer
+    Zap, Gauge, Flag, Fuel, Thermometer, Timer
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatLapTime, formatSpeed } from '@/lib/utils';
 import CarInfoDisplay from './CarInfoDisplay';
 
@@ -199,6 +200,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
     const [completedLaps, setCompletedLaps] = useState<LapData[]>([]);
     const [averageFuelPerLap, setAverageFuelPerLap] = useState<number>(0);
     const [averageLapTime, setAverageLapTime] = useState<number>(0);
+    const [lapHistory, setLapHistory] = useState<any[]>([]);
 
     const [speedUnit, setSpeedUnit] = useState<'kph' | 'mph'>('kph');
     const prevLapForFuelRef = useRef<number>(0);
@@ -255,6 +257,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
             setCompletedLaps([]);
             setAverageFuelPerLap(0);
             setAverageLapTime(0);
+            setLapHistory([]);
             startFuelRef.current = data.fuel_percentage;
             totalFuelConsumedRef.current = 0;
             fuelAddedThisLapRef.current = 0;
@@ -294,6 +297,18 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                     setAverageLapTime(avgTime);
 
                     return newLaps;
+                });
+            }
+
+            // Update lap history for chart display
+            if (data.last_lap_time > 0) {
+                setLapHistory(prev => {
+                    const newHistory = [...prev.slice(-4), {
+                        lap: data.current_lap - 1,
+                        time: data.last_lap_time / 1000,
+                        fuel: fuelUsedThisLap
+                    }];
+                    return newHistory;
                 });
             }
 
@@ -404,11 +419,11 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                 {/* start of left column */}
                 <div className='col-span-8 space-y-4'>
                     <div className='bg-tt-bg-card rounded-lg p-4'>
-                            <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-md font-medium text-tt-text-secondary flex items-center">
-                                    <Zap className="w-4 h-4 mr-1 text-tt-red-400" /> ENGINE
-                                </h3>
-                                <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-md font-bold text-tt-text-secondary flex items-center">
+                                <Zap className="w-4 h-4 mr-1 text-tt-red-400" /> ENGINE
+                            </h3>
+                            <div className="flex items-center gap-2">
                                 <span className="text-sm text-tt-text-secondary">KPH</span>
                                 <div className={`h-5 w-8 cursor-pointer rounded-full p-1 transition-colors duration-200 ${speedUnit === 'mph' ? 'bg-tt-red-500' : 'bg-tt-blue-500'}`}
                                     onClick={() => setSpeedUnit(speedUnit === 'kph' ? 'mph' : 'kph')}>
@@ -416,7 +431,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                                 </div>
                                 <span className="text-sm text-tt-text-secondary">MPH</span>
                             </div>
-                            </div>
+                        </div>
                         {/* RPM BAR */}
                         <div className='flex items-center gap-2'>
                             <RPMBar
@@ -433,7 +448,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                             {/* Speed + Gear Telemetry */}
                             <div className="text-center col-span-3">
                                 <p className="text-md text-tt-text-secondary">SPEED</p>
-                                <p className="text-3xl font-bold">{formattedSpeed.slice(0,formattedSpeed.length - 4)}</p>
+                                <p className="text-3xl font-bold">{formattedSpeed.slice(0, formattedSpeed.length - 4)}</p>
                                 <p className="text-lg text-tt-text-secondary">{speedUnit.toUpperCase()}</p>
                             </div>
                             <div className="text-center relative col-span-2">
@@ -456,7 +471,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                     <div className='bg-tt-bg-card rounded-lg p-4'>
 
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-md font-medium text-tt-text-secondary flex items-center">
+                            <h3 className="text-md font-bold text-tt-text-secondary flex items-center">
                                 <Flag className="w-4 h-4 mr-1 text-tt-blue-400" /> RACE INFO
                             </h3>
                         </div>
@@ -510,28 +525,85 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                         </div>
                     </div>
 
-                    <div className="bg-tt-bg-card rounded-lg p-4">
-                        <div className="flex items-center mb-2">
-                            <Thermometer className="w-4 h-4 mr-1 text-tt-blue-400" />
-                            <h3 className="text-md font-medium text-tt-text-secondary">TIRE TEMPERATURES</h3>
-                        </div>
+                    {/* Tire Temperatures and Lap Chart */}
+                    <div className="grid grid-cols-2 gap-6">
+                        {/* Left side - Tire Temperatures */}
+                        <div className="bg-tt-bg-card rounded-lg p-4">
+                            <div>
+                                <div className="flex items-center mb-2">
+                                    <Thermometer className="w-4 h-4 mr-1 text-tt-blue-400" />
+                                    <h3 className="text-md font-bold text-tt-text-secondary">TIRE TEMPERATURES</h3>
+                                </div>
 
-                        <div className="grid grid-cols-2 gap-8 py-2">
-                            <div className="flex justify-center">
-                                <TireTemp position="FRONT LEFT" temp={data.tire_temp_fl} />
-                            </div>
-                            <div className="flex justify-center">
-                                <TireTemp position="FRONT RIGHT" temp={data.tire_temp_fr} />
+                                <div className="grid grid-cols-2 gap-4 py-2">
+                                    <div className="flex justify-center">
+                                        <TireTemp position="FRONT LEFT" temp={data.tire_temp_fl} />
+                                    </div>
+                                    <div className="flex justify-center">
+                                        <TireTemp position="FRONT RIGHT" temp={data.tire_temp_fr} />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 py-2">
+                                    <div className="flex justify-center">
+                                        <TireTemp position="REAR LEFT" temp={data.tire_temp_rl} />
+                                    </div>
+                                    <div className="flex justify-center">
+                                        <TireTemp position="REAR RIGHT" temp={data.tire_temp_rr} />
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-8 py-2">
-                            <div className="flex justify-center">
-                                <TireTemp position="REAR LEFT" temp={data.tire_temp_rl} />
-                            </div>
-                            <div className="flex justify-center">
-                                <TireTemp position="REAR RIGHT" temp={data.tire_temp_rr} />
-                            </div>
+                        {/* Right side - Lap Time Chart */}
+                        <div className="bg-tt-bg-card rounded-lg p-4">
+                            {lapHistory.length > 0 ? (
+                                <>
+                                    <div className="flex items-center mb-5">
+                                        <Timer className="w-4 h-4 mr-1 text-tt-blue-400" />
+                                        <h3 className="text-md font-bold text-tt-text-secondary">LAP TIMES</h3>
+                                    </div>
+                                    <div className="h-80">
+                                        <ResponsiveContainer width="95%" height="100%">
+                                            <LineChart data={lapHistory}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="var(--tt-gray-700)" />
+                                                <XAxis
+                                                    dataKey="lap"
+                                                    stroke="var(--tt-text-gray-400)"
+                                                    fontSize={12}
+                                                />
+                                                <YAxis
+                                                    stroke="var(--tt-text-gray-400)"
+                                                    fontSize={12}
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        backgroundColor: 'var(--tt-gray-800)',
+                                                        border: 'none',
+                                                        borderRadius: '8px',
+                                                        fontSize: '12px'
+                                                    }}
+                                                    formatter={(value: any) => [`${value.toFixed(3)}s`, 'Time']}
+                                                    labelFormatter={(label) => `Lap ${label}`}
+                                                />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="time"
+                                                    stroke="var(--tt-blue-500)"
+                                                    strokeWidth={2}
+                                                    dot={{ fill: 'var(--tt-blue-500)', r: 3 }}
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex items-center justify-center h-80">
+                                    <div className="text-center">
+                                        <Timer className="w-8 h-8 mx-auto mb-2 text-tt-text-gray-400" />
+                                        <p className="text-sm text-tt-text-gray-400">Complete laps to see lap time chart</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -543,7 +615,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                     <div className="bg-tt-bg-card rounded-lg p-4">
                         <div className="flex items-center mb-2">
                             <Droplet className="w-4 h-4 mr-1 text-tt-red-600" />
-                            <h3 className="text-md font-medium text-tt-text-secondary">FUEL STATUS</h3>
+                            <h3 className="text-md font-bold text-tt-text-secondary">FUEL STATUS</h3>
                         </div>
 
                         <div className="flex items-center gap-8">
@@ -558,7 +630,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                                     <p className="text-lg font-medium text-tt-text-primary">{estimatedLapsRemaining.toFixed(1)} laps</p>
                                 </div>
                             </div>
-                            
+
                             {/* Circular gauge */}
                             <div className="flex ml-20">
                                 <CircularGauge
@@ -566,60 +638,60 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                                     max={100}
                                     title="REMAINING"
                                     unit="%"
-                                    icon={<Droplet className="h-6 w-6 text-tt-red-600"/>}
+                                    icon={<Droplet className="h-6 w-6 text-tt-red-600" />}
                                     colorClass={"text-tt-red-400"}
                                 />
                             </div>
                         </div>
                     </div>
                     {/* Vehicle Vitals */}
-          <div className="bg-tt-bg-card rounded-lg p-4">
-            <div className="flex items-center">
-              <Activity className="w-4 h-4 mr-1 text-tt-blue-400" />
-              <h3 className="text-md font-medium text-tt-text-secondary">VEHICLE VITALS</h3>
-            </div>
-            {/* Oil and Water Bars */}
-            <div className="space-y-3 p-4">
-              <div className="bg-tt-bg-dark rounded-md p-2 flex justify-between items-center">
-                <span className="text-md text-tt-text-secondary w-14">WATER</span>
-                <div className="flex items-center gap-2 flex-1 ml-4">
-                  <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-tt-blue-500 transition-all duration-100"
-                      style={{ width: `${(data.water_temp / 120) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-md font-mono w-12 text-right">{data.water_temp.toFixed(0)}°C</span>
-                </div>
-              </div>
-              <div className="bg-tt-bg-dark rounded-md p-2 flex justify-between items-center">
-                <span className="text-md text-tt-text-secondary w-14">OIL</span>
-                <div className="flex items-center gap-2 flex-1 ml-4">
-                  <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-tt-status-warning transition-all duration-100"
-                      style={{ width: `${(data.oil_temp / 150) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-md font-mono w-12 text-right">{data.oil_temp.toFixed(0)}°C</span>
-                </div>
-              </div>
-            </div>
-            {/* Oil Pressure + Ride Height */}
-            <div className="grid grid-cols-2 gap-2">
-              
-              <div className="bg-tt-bg-dark rounded-md p-2">
-                <p className="text-sm text-tt-text-secondary">OIL PRESSURE</p>
-                <p className="text-lg font-bold text-tt-text-primary">{data.oil_pressure} bar</p>
-              </div>
-              
-              <div className="bg-tt-bg-dark rounded-md p-2">
-                <p className="text-sm text-tt-text-secondary">RIDE HEIGHT</p>
-                <p className="text-lg font-bold text-tt-text-primary">{(data.body_height * 1000).toFixed(0)} mm</p>
-              </div>
-            </div>
-            </div>
-                
+                    <div className="bg-tt-bg-card rounded-lg p-4">
+                        <div className="flex items-center">
+                            <Activity className="w-4 h-4 mr-1 text-tt-blue-400" />
+                            <h3 className="text-md font-bold text-tt-text-secondary">VEHICLE VITALS</h3>
+                        </div>
+                        {/* Oil and Water Bars */}
+                        <div className="space-y-3 p-4">
+                            <div className="bg-tt-bg-dark rounded-md p-2 flex justify-between items-center">
+                                <span className="text-md text-tt-text-secondary w-14">WATER</span>
+                                <div className="flex items-center gap-2 flex-1 ml-4">
+                                    <div className="flex-1 h-2 bg-tt-gray-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-tt-blue-500 transition-all duration-100"
+                                            style={{ width: `${(data.water_temp / 120) * 100}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-md font-mono w-12 text-right">{data.water_temp.toFixed(0)}°C</span>
+                                </div>
+                            </div>
+                            <div className="bg-tt-bg-dark rounded-md p-2 flex justify-between items-center">
+                                <span className="text-md text-tt-text-secondary w-14">OIL</span>
+                                <div className="flex items-center gap-2 flex-1 ml-4">
+                                    <div className="flex-1 h-2 bg-tt-gray-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-tt-status-warning transition-all duration-100"
+                                            style={{ width: `${(data.oil_temp / 150) * 100}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-md font-mono w-12 text-right">{data.oil_temp.toFixed(0)}°C</span>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Oil Pressure + Ride Height */}
+                        <div className="grid grid-cols-2 gap-2">
+
+                            <div className="bg-tt-bg-dark rounded-md p-2">
+                                <p className="text-sm text-tt-text-secondary">OIL PRESSURE</p>
+                                <p className="text-lg font-bold text-tt-text-primary">{data.oil_pressure} bar</p>
+                            </div>
+
+                            <div className="bg-tt-bg-dark rounded-md p-2">
+                                <p className="text-sm text-tt-text-secondary">RIDE HEIGHT</p>
+                                <p className="text-lg font-bold text-tt-text-primary">{(data.body_height * 1000).toFixed(0)} mm</p>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
