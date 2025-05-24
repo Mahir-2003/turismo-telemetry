@@ -80,10 +80,30 @@ module.exports = {
 				card: '#0B0E13',       // card background
 				accent: '#2D3748',     // accent background
 			},
+			'tt-gray': {
+				900: '#111827',
+				800: '#1F2937',
+				700: '#374151',
+				600: '#4B5563',
+				500: '#6B7280',
+				400: '#9CA3AF',
+				300: '#D1D5DB',
+			},
+			'tt-black': '#000000',
 			'tt-text': {
 				primary: '#FFFFFF',    // primary text (white)
 				secondary: '#A7C7E7',  // secondary text (light blue)
 				muted: '#64748B',      // muted text
+				'gray-400': '#9CA3AF', // advanced display muted text
+				'gray-500': '#6B7280', // advanced display more muted text
+			},
+			'tt-green': {
+				400: '#4ADE80',
+				500: '#22C55E',
+			},
+			'tt-yellow': {
+				400: '#FACC15',
+				500: '#EAB308',
 			},
 			'tt-status': {
 				success: '#38A169',    // success (green)

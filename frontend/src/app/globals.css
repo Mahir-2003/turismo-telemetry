@@ -87,9 +87,27 @@ a {
     --tt-bg-card: #1A202C;
     --tt-bg-accent: #2D3748;
     
+    /* Advanced Display gray scale backgrounds */
+    --tt-gray-900: #111827;
+    --tt-gray-800: #1F2937;
+    --tt-gray-700: #374151;
+    --tt-gray-600: #4B5563;
+    --tt-gray-500: #6B7280;
+    --tt-gray-400: #9CA3AF;
+    --tt-gray-300: #D1D5DB;
+    --tt-black: #000000;
+    
     --tt-text-primary: #FFFFFF;
     --tt-text-secondary: #A7C7E7;
     --tt-text-muted: #64748B;
+    --tt-text-gray-400: #9CA3AF;
+    --tt-text-gray-500: #6B7280;
+    
+    /* Enhanced status colors */
+    --tt-green-400: #4ADE80;
+    --tt-green-500: #22C55E;
+    --tt-yellow-400: #FACC15;
+    --tt-yellow-500: #EAB308;
     
     --tt-status-success: #38A169;
     --tt-status-warning: #ECC94B;
