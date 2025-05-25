@@ -46,25 +46,268 @@ const CircularGauge = ({ value, max, label, unit, danger = false }: { value: num
 };
 
 const RPMGauge = ({ rpm, maxRpm, flashingRpm }: { rpm: number; maxRpm: number; flashingRpm: number }) => {
-  const data = [{ value: (rpm / maxRpm) * 100, rpm }];
+  const percentage = Math.min((rpm / maxRpm) * 100, 100);
   const isFlashing = rpm >= flashingRpm;
+  const isNearRedline = rpm >= flashingRpm * 0.9;
+  
+  // arc path for the gauge
+  const centerX = 200;
+  const centerY = 140;
+  const radius = 120;
+  const strokeWidth = 16;
+  const normalizedPercentage = percentage / 100;
+  
+  // wide arc span: from -135° to +135° (270° total instead of 180°)
+  const startAngle = -135;
+  const endAngle = 135;
+  const totalAngleSpan = endAngle - startAngle;
+  const angle = startAngle + (normalizedPercentage * totalAngleSpan);
+  
+  const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
+    const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+    return {
+      x: centerX + (radius * Math.cos(angleInRadians)),
+      y: centerY + (radius * Math.sin(angleInRadians))
+    };
+  };
+  
+  const arc = (x: number, y: number, radius: number, startAngle: number, endAngle: number) => {
+    const start = polarToCartesian(x, y, radius, endAngle);
+    const end = polarToCartesian(x, y, radius, startAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+    return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
+  };
+  
+  // gradient stops for smooth color transition
+  const getGradientColor = () => {
+    if (isFlashing) return "#ef4444"; // red
+    if (isNearRedline) return "#f59e0b"; // amber
+    if (percentage > 60) return "#3b82f6"; // blue
+    return "#06b6d4"; // cyan
+  };
   
   return (
-    <div className="relative w-48 h-48">
-      <ResponsiveContainer width="100%" height="100%">
-        <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={data} startAngle={180} endAngle={0}>
-          <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-          <RadialBar 
-            dataKey="value" 
-            cornerRadius={10} 
-            fill={isFlashing ? "var(--tt-status-error)" : rpm > flashingRpm * 0.9 ? "var(--tt-status-warning)" : "var(--tt-status-info)"}
-            className={isFlashing ? "animate-pulse" : ""}
+    <div className="w-full relative" style={{ height: '180px' }}>
+      <svg 
+        width="100%" 
+        height="100%" 
+        viewBox="0 0 400 180"
+        preserveAspectRatio="xMidYMid meet"
+        className="overflow-visible"
+      >
+        <defs>
+          <linearGradient id="rpmGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.9" />
+            <stop offset="40%" stopColor="#3b82f6" />
+            <stop offset="70%" stopColor="#f59e0b" />
+            <stop offset="85%" stopColor="#f97316" />
+            <stop offset="100%" stopColor="#ef4444" />
+          </linearGradient>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <filter id="redlineGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+       
+        {/* Background track */}
+        <path
+          d={arc(centerX, centerY, radius, startAngle, endAngle)}
+          fill="none"
+          stroke="#1e293b"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+        />
+        
+        {/* Redline zone background */}
+        {flashingRpm < maxRpm && (
+          <path
+            d={arc(centerX, centerY, radius, startAngle + ((flashingRpm / maxRpm) * totalAngleSpan), endAngle)}
+            fill="none"
+            stroke="#7f1d1d"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            opacity="0.4"
           />
-        </RadialBarChart>
-      </ResponsiveContainer>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-tt-text-primary">{Math.round(rpm)}</span>
-        <span className="text-sm text-tt-text-secondary">RPM</span>
+        )}
+        
+        {/* Main gauge arc */}
+        <path
+          d={arc(centerX, centerY, radius, startAngle, angle)}
+          fill="none"
+          stroke="url(#rpmGradient)"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          filter={isFlashing ? "url(#redlineGlow)" : "url(#glow)"}
+          className={isFlashing ? "animate-pulse" : "transition-all duration-100"}
+        />
+        
+        {/* Tick marks */}
+        {(() => {
+          const generateTickMarks = (maxRpm: number) => {
+            const ticks: number[] = [];
+            
+            // start with 0
+            ticks.push(0);
+            
+            // add ticks for every 1000 RPM up to the nearest thousand below maxRpm
+            const maxThousands = Math.floor(maxRpm / 1000);
+            for (let i = 1; i <= maxThousands; i++) {
+              ticks.push(i * 1000);
+            }
+            
+            // if maxRpm is not exactly on a thousand mark, add maxRpm as final tick
+            if (maxRpm % 1000 !== 0) {
+              ticks.push(maxRpm);
+            }
+            
+            return ticks;
+          };
+          
+          return generateTickMarks(maxRpm).map((value, i) => {
+            const tickAngle = startAngle + ((value / maxRpm) * totalAngleSpan);
+            const innerRadius = radius - 25;
+            const outerRadius = radius - 8;
+            const inner = polarToCartesian(centerX, centerY, innerRadius, tickAngle);
+            const outer = polarToCartesian(centerX, centerY, outerRadius, tickAngle);
+            
+            // Redline ticks are thicker and red
+            const isRedline = value >= flashingRpm;
+            
+            return (
+              <line
+                key={value}
+                x1={inner.x}
+                y1={inner.y}
+                x2={outer.x}
+                y2={outer.y}
+                stroke={isRedline ? "#ef4444" : "#64748b"}
+                strokeWidth={isRedline ? "4" : "3"}
+                opacity={isRedline ? "0.9" : "0.7"}
+              />
+            );
+          });
+        })()}
+        
+        {/* Minor tick marks (500 RPM intervals) */}
+        {(() => {
+          const minorTicks: number[] = [];
+          for (let i = 500; i < maxRpm; i += 1000) {
+            minorTicks.push(i);
+          }
+          
+          return minorTicks.map((value) => {
+            const tickAngle = startAngle + ((value / maxRpm) * totalAngleSpan);
+            const innerRadius = radius - 18;
+            const outerRadius = radius - 10;
+            const inner = polarToCartesian(centerX, centerY, innerRadius, tickAngle);
+            const outer = polarToCartesian(centerX, centerY, outerRadius, tickAngle);
+            
+            return (
+              <line
+                key={value}
+                x1={inner.x}
+                y1={inner.y}
+                x2={outer.x}
+                y2={outer.y}
+                stroke="#64748b"
+                strokeWidth="2"
+                opacity="0.4"
+              />
+            );
+          });
+        })()}
+        
+        {/* Center dot */}
+        <circle
+          cx={centerX}
+          cy={centerY}
+          r="4"
+          fill="#64748b"
+        />
+        
+        {/* RPM needle */}
+        <line
+          x1={centerX}
+          y1={centerY}
+          x2={polarToCartesian(centerX, centerY, radius - 30, angle).x}
+          y2={polarToCartesian(centerX, centerY, radius - 30, angle).y}
+          stroke={getGradientColor()}
+          strokeWidth="3"
+          strokeLinecap="round"
+          filter="url(#glow)"
+          className="transition-all duration-100"
+        />
+      </svg>
+      
+      {/* Digital RPM display */}
+      <div className="absolute inset-0 flex items-center justify-center" style={{ top: '40px' }}>
+        <div className="text-center bg-black bg-opacity-60 rounded-lg px-4 py-2 backdrop-blur-sm border border-gray-700">
+          <div className="text-3xl font-bold tabular-nums font-mono" style={{ color: getGradientColor() }}>
+            {Math.round(rpm).toLocaleString()}
+          </div>
+          <div className="text-xs text-gray-400 mt-1 tracking-wider">RPM</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SpeedDisplay = ({ speed, maxSpeed, unit }: { speed: number; maxSpeed: number; unit: 'kph' | 'mph' }) => {
+  const percentage = Math.min((speed / maxSpeed) * 100, 100);
+  
+  // Color based on speed percentage
+  const getSpeedColor = () => {
+    if (percentage > 85) return "#ef4444"; // red
+    if (percentage > 70) return "#f59e0b"; // amber
+    if (percentage > 50) return "#3b82f6"; // blue
+    return "#06b6d4"; // cyan
+  };
+  
+  return (
+    <div className="w-full space-y-3">
+      {/* Large speed number with unit */}
+      <div className="flex items-baseline justify-center gap-2">
+        <span className="text-5xl font-bold tabular-nums" style={{ color: getSpeedColor() }}>
+          {Math.round(speed)}
+        </span>
+        <span className="text-xl font-medium text-gray-400">
+          {unit.toUpperCase()}
+        </span>
+      </div>
+      
+      {/* Horizontal speed bar */}
+      <div className="relative">
+        <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+          <div 
+            className="h-full transition-all duration-200 relative"
+            style={{ 
+              width: `${percentage}%`,
+              background: `linear-gradient(to right, #06b6d4, ${getSpeedColor()})`
+            }}
+          >
+            {/* Animated glow effect */}
+            <div className="absolute inset-0 bg-white opacity-20 animate-pulse" />
+          </div>
+        </div>
+        
+        {/* Speed markers */}
+        <div className="flex justify-between mt-1 text-xs text-gray-500">
+          <span>0</span>
+          <span>{Math.round(maxSpeed * 0.25)}</span>
+          <span>{Math.round(maxSpeed * 0.5)}</span>
+          <span>{Math.round(maxSpeed * 0.75)}</span>
+          <span>{maxSpeed}</span>
+        </div>
       </div>
     </div>
   );
@@ -361,7 +604,7 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
   
   const isOnTrack = Boolean(data.flags & SimulatorFlags.CAR_ON_TRACK);
   const hasTurbo = Boolean(data.flags & SimulatorFlags.HAS_TURBO);
-  const speed = Number(formatSpeed(data.speed_mps, speedUnit));
+  const maxSpeed = speedUnit === 'kph' ? 350 : 220;
   const throttlePercent = ((data.throttle / 255) * 100);
   const brakePercent = ((data.brake / 255) * 100);
   
@@ -411,26 +654,25 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
                 {speedUnit.toUpperCase()}
               </button>
             </div>
-            
-            <div className="flex justify-around items-center">
-              <CircularGauge 
-                value={Number(formattedSpeed.slice(0,formattedSpeed.length - 4))} 
-                max={speedUnit === 'kph' ? 500 : 320} 
-                label="Speed" 
-                unit={speedUnit.toUpperCase()} 
+            {/* RPM Gauge - Full width */}
+            <div className="space-y-10">
+              <RPMGauge
+                rpm={data.engine_rpm}
+                maxRpm={data.rpm_hit}
+                flashingRpm={data.rpm_flashing}
               />
-              <RPMGauge 
-                rpm={data.engine_rpm} 
-                maxRpm={data.rpm_hit} 
-                flashingRpm={data.rpm_flashing} 
+              {/* Speed Display */}
+              <SpeedDisplay
+                speed={Number(formattedSpeed.slice(0, formattedSpeed.length - 4))}
+                maxSpeed={maxSpeed}
+                unit={speedUnit as 'kph' | 'mph'}
               />
             </div>
-            
             {/* Gear indicator */}
             <div className="text-center">
               <div className="inline-flex items-center gap-3 bg-tt-gray-800 rounded-lg px-6 py-3">
                 <span className="text-6xl font-bold text-tt-text-primary">{data.current_gear}</span>
-                {data.suggested_gear !== 15 && data.suggested_gear !== data.current_gear && (
+                {suggestedGear && suggestedGear !== data.current_gear && (
                   <div className="flex flex-col items-center animate-pulse">
                     <TrendingUp className="w-6 h-6 text-tt-green-400" />
                     <span className="text-2xl font-bold text-tt-green-400">{data.suggested_gear}</span>
@@ -494,11 +736,25 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-4 bg-tt-gray-800 rounded-lg">
-                <p className="text-3xl p-1 font-bold text-tt-blue-400">{data.current_position}/{data.total_positions}</p>
+                <div className="flex p-1 items-baseline justify-center">
+                  <span className="text-4xl font-bold text-tt-blue-400">{currentPosition}</span>
+                  <span className="text-lg text-tt-text-secondary">/{totalPositions}</span>
+                </div>
                 <p className="text-sm text-tt-text-secondary">Position</p>
               </div>
               <div className="text-center p-4 bg-tt-gray-800 rounded-lg">
-                <p className="text-3xl p-1 font-bold text-tt-text-primary">{data.current_lap}/{data.total_laps}</p>
+                <div className="flex items-baseline justify-center p-1">
+                  {currentLap == -1 ? (
+                    <span className="text-4xl font-bold text-tt-red-400">N/A</span>
+                  ) : isTrial ? (
+                    <span className="text-4xl font-bold text-tt-red-400">{currentLap}</span>
+                  ) : (
+                    <>
+                      <span className="text-4xl font-bold text-tt-red-400">{currentLap}</span>
+                      <span className="text-lg text-tt-text-secondary">/{totalLaps}</span>
+                    </>
+                  )}
+                </div>
                 <p className="text-sm text-tt-text-secondary">Lap</p>
               </div>
             </div>
@@ -619,13 +875,13 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="bg-tt-gray-800 rounded p-2">
-                  <p className="text-tt-text-secondary">Remaining</p>
-                  <p className="font-bold text-tt-text-primary">{data.current_fuel.toFixed(1)}L</p>
+                <div className="bg-tt-gray-800 rounded p-2 text-center">
+                  <p className="font-medium text-tt-text-secondary">Remaining Laps</p>
+                  <p className="text-lg font-bold text-tt-text-primary">{estimatedLapsRemaining.toFixed(1)}</p>
                 </div>
-                <div className="bg-tt-gray-800 rounded p-2">
-                  <p className="text-tt-text-secondary">Per Lap</p>
-                  {/* <p className="font-bold">{data.fuel_consumption_lap.toFixed(1)}L</p> */}
+                <div className="bg-tt-gray-800 rounded p-2 text-center">
+                  <p className="font-medium text-tt-text-secondary">Per Lap</p>
+                  <p className="text-lg font-bold text-tt-text-primary">{averageFuelPerLap > 0 ? `${averageFuelPerLap.toFixed(1)}%` : '---'}</p>
                 </div>
               </div>
               {data.fuel_percentage < 20 && (
