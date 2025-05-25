@@ -273,7 +273,7 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
                             <Gauge className="h-5 w-5 text-tt-blue-400" />
                             Telemetry Dashboard
                             {isDevMode && (
-                                <span className="text-xs font-semibold px-2 py-0.5 bg-green-500/20 text-green-600 dark:text-green-400 rounded-full">
+                                <span className="text-xs font-semibold px-2 py-0.5 bg-tt-status-success/20 text-tt-status-success rounded-full">
                                     DEV MODE
                                 </span>
                             )}
