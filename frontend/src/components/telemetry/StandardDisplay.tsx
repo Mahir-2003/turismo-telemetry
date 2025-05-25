@@ -512,15 +512,15 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                         <div className="grid grid-cols-3 gap-4 mt-3">
                             <div className="text-center">
                                 <p className="text-md text-tt-text-secondary">LAST LAP</p>
-                                <p className="text-xl font-mono font-bold">{formatLapTime(data.last_lap_time)}</p>
+                                <p className="text-xl font-mono font-bold text-tt-green-400">{formatLapTime(data.last_lap_time)}</p>
                             </div>
                             <div className="text-center">
                                 <p className="text-md text-tt-text-secondary">CURRENT</p>
-                                <p className="text-xl font-mono font-bold text-tt-blue-400">{formatLapTime(currentLapTime)}</p>
+                                <p className="text-xl font-mono font-bold text-tt-primary">{formatLapTime(currentLapTime)}</p>
                             </div>
                             <div className="text-center">
                                 <p className="text-md text-tt-text-secondary">BEST</p>
-                                <p className="text-xl font-mono font-bold text-tt-status-success">{formatLapTime(data.best_lap_time)}</p>
+                                <p className="text-xl text-purple-400 font-mono font-bold ">{formatLapTime(data.best_lap_time)}</p>
                             </div>
                         </div>
                     </div>
