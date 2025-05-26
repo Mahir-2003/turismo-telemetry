@@ -358,6 +358,20 @@ const TireWidget = ({ temps }: { temps: { fl: number; fr: number; rl: number; rr
 
       return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   }; 
+
+  // Function to determine text color based on background lightness
+const getTextColor = (temp: number): string => {
+    // For lighter backgrounds (yellow/green range), use dark text
+    // For darker backgrounds (blue/red range), use light text
+    if (temp >= 60 && temp < 100) {
+        // Yellow/green range - these are lighter, use dark text
+        return '#000000';
+    } else {
+        // Blue and red ranges - these are darker, use light text
+        return '#FFFFFF';
+    }
+};
+
   
   const Tire = ({ temp, position }: { temp: number; position: string }) => (
     <div className="relative">
@@ -368,7 +382,12 @@ const TireWidget = ({ temps }: { temps: { fl: number; fr: number; rl: number; rr
           boxShadow: `0 0 20px ${getTemperatureHSL(temp)}66`
         }}
       >
-        <span className="text-white font-bold">{temp.toFixed(0)}°</span>
+        <span 
+                    className="font-bold"
+                    style={{ color: getTextColor(temp) }}
+                >
+                    {temp.toFixed(1)}°
+        </span>
       </div>
       <span className="absolute -bottom-5 left-0 right-0 text-center text-xs text-tt-text-secondary">{position}</span>
     </div>
@@ -774,38 +793,58 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
               </div>
             </div>
           </div>
-          
+
           {/* Lap time chart */}
-          {lapHistory.length > 0 && (
-            <div className="bg-tt-gray-900 rounded-xl p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-tt-text-primary">
-                <Timer className="w-5 h-5" />
-                Lap Times
-              </h3>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
+          {lapHistory.length > 0 ? (
+            <>
+              <div className="flex items-center mb-5">
+                <Timer className="w-4 h-4 mr-1 text-tt-blue-400" />
+                <h3 className="text-md font-bold text-tt-text-secondary">LAP TIMES</h3>
+              </div>
+              <div className="h-80">
+                <ResponsiveContainer width="95%" height="100%">
                   <LineChart data={lapHistory}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--tt-gray-700)" />
-                    <XAxis dataKey="lap" stroke="var(--tt-text-gray-400)" />
-                    <YAxis stroke="var(--tt-text-gray-400)" />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'var(--tt-gray-800)', border: 'none', borderRadius: '8px' }}
-                      formatter={(value: any) => `${value.toFixed(3)}s`}
+                    <XAxis
+                      dataKey="lap"
+                      stroke="var(--tt-text-gray-400)"
+                      fontSize={12}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="time" 
-                      stroke="var(--tt-blue-500)" 
+                    <YAxis
+                      stroke="var(--tt-text-gray-400)"
+                      fontSize={12}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'var(--tt-gray-800)',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value: any) => [`${formatLapTime(value * 1000)}`, 'Time']}
+                      labelFormatter={(label) => `Lap ${label}`}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="time"
+                      stroke="var(--tt-blue-500)"
                       strokeWidth={2}
-                      dot={{ fill: 'var(--tt-blue-500)', r: 4 }}
+                      dot={{ fill: 'var(--tt-blue-500)', r: 3 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-80">
+              <div className="text-center">
+                <Timer className="w-8 h-8 mx-auto mb-2 text-tt-text-gray-400" />
+                <p className="text-sm text-tt-text-gray-400">Complete laps to see lap time chart</p>
+              </div>
             </div>
           )}
         </div>
-        
+
         {/* Right column - Car status */}
         <div className="space-y-4">
           {/* Temperatures */}
