@@ -163,6 +163,19 @@ const getTemperatureHSL = (temp: number, adjust: number = 0): string => {
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 };
 
+// Function to determine text color based on background lightness
+const getTextColor = (temp: number): string => {
+    // For lighter backgrounds (yellow/green range), use dark text
+    // For darker backgrounds (blue/red range), use light text
+    if (temp >= 60 && temp < 100) {
+        // Yellow/green range - these are lighter, use dark text
+        return '#000000';
+    } else {
+        // Blue and red ranges - these are darker, use light text
+        return '#FFFFFF';
+    }
+};
+
 
 // Tire Component from TyreTemperatures modified for this display
 const TireTemp = ({ position, temp }: { position: string, temp: number }) => {
@@ -187,7 +200,12 @@ const TireTemp = ({ position, temp }: { position: string, temp: number }) => {
                     transition: 'all 300ms ease-in-out',
                 }}
             >
-                <span className="text-lg font-bold">{temp.toFixed(1)}°</span>
+                <span 
+                    className="text-lg font-bold"
+                    style={{ color: getTextColor(temp) }}
+                >
+                    {temp.toFixed(1)}°
+                </span>
             </div>
             <p className="text-sm mt-1 text-tt-text-secondary">{position}</p>
         </div>
@@ -448,17 +466,19 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                             {/* Speed + Gear Telemetry */}
                             <div className="text-center col-span-3">
                                 <p className="text-md text-tt-text-secondary">SPEED</p>
-                                <p className="text-3xl font-bold">{formattedSpeed.slice(0, formattedSpeed.length - 4)}</p>
+                                <p className="text-3xl font-bold">{formattedSpeed.slice(0, formattedSpeed.length - 6)}</p>
                                 <p className="text-lg text-tt-text-secondary">{speedUnit.toUpperCase()}</p>
                             </div>
                             <div className="text-center relative col-span-2">
                                 <p className="text-md text-tt-text-secondary">GEAR</p>
-                                <p className="text-5xl font-bold">{data.current_gear}</p>
-                                {suggestedGear && suggestedGear !== data.current_gear && (
-                                    <div className="absolute -right-1 bottom-1 bg-tt-red-500 text-white text-xs font-bold rounded px-1 py-0.5 shadow-md">
-                                        {suggestedGear}
-                                    </div>
-                                )}
+                                <div className="flex items-center justify-center gap-2">
+                                    <p className="text-5xl font-bold">{data.current_gear}</p>
+                                    {suggestedGear && suggestedGear !== data.current_gear && (
+                                        <div className="bg-tt-red-500 text-white rounded-xl px-3 py-2 shadow-xl border-2 border-tt-red-300">
+                                            <span className="text-xl font-bold">{suggestedGear}</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             {/* Throttle and Brake Horizontal Bars */}
                             <div className="space-y-4 pt-4 col-span-7">
@@ -582,7 +602,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                                                         borderRadius: '8px',
                                                         fontSize: '12px'
                                                     }}
-                                                    formatter={(value: any) => [`${value.toFixed(3)}s`, 'Time']}
+                                                    formatter={(value: any) => [`${formatLapTime(value*1000)}`, 'Time']}
                                                     labelFormatter={(label) => `Lap ${label}`}
                                                 />
                                                 <Line
@@ -623,11 +643,11 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
                             <div className="flex flex-col space-y-4 px-4">
                                 <div>
                                     <p className="text-md text-tt-text-secondary mb-1">CONSUMPTION</p>
-                                    <p className="text-lg font-medium text-tt-text-primary">{averageFuelPerLap > 0 ? `${averageFuelPerLap.toFixed(1)}% / lap` : '---'}</p>
+                                    <p className="text-xl font-medium text-tt-text-primary">{averageFuelPerLap > 0 ? `${averageFuelPerLap.toFixed(1)}% / lap` : '---'}</p>
                                 </div>
                                 <div>
                                     <p className="text-md text-tt-text-secondary mb-1">ESTIMATED</p>
-                                    <p className="text-lg font-medium text-tt-text-primary">{estimatedLapsRemaining.toFixed(1)} laps</p>
+                                    <p className="text-xl font-medium text-tt-text-primary">{estimatedLapsRemaining.toFixed(1)} laps</p>
                                 </div>
                             </div>
 
@@ -682,7 +702,7 @@ const StandardDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) => 
 
                             <div className="bg-tt-bg-dark rounded-md p-2">
                                 <p className="text-sm text-tt-text-secondary">OIL PRESSURE</p>
-                                <p className="text-lg font-bold text-tt-text-primary">{data.oil_pressure} bar</p>
+                                <p className="text-lg font-bold text-tt-text-primary">{data.oil_pressure.toFixed(0)} bar</p>
                             </div>
 
                             <div className="bg-tt-bg-dark rounded-md p-2">
