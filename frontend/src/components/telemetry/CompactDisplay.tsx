@@ -109,14 +109,6 @@ const TireDisplay = ({ temp, position }: { temp: number; position: 'fl' | 'fr' |
                 <div className='text-2xl font-bold' style={{ color: getTextColor(temp) }}>
                     {temp.toFixed(1)}°
                 </div>
-                <div className="w-16 h-8 border-2 rounded-full mt-1 flex items-center justify-center"
-                    style={{ borderColor: getTextColor(temp) }}
-                >
-                    <div
-                        className="w-12 h-4 rounded-full"
-                        style={{ backgroundColor: getTextColor(temp), opacity: 0.6 }}
-                    />
-                </div>
             </div>
         </div>
     );
