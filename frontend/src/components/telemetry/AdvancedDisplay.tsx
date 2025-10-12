@@ -48,214 +48,165 @@ const CircularGauge = ({ value, max, label, unit, danger = false }: { value: num
 const RPMGauge = ({ rpm, maxRpm, flashingRpm }: { rpm: number; maxRpm: number; flashingRpm: number }) => {
   const percentage = Math.min((rpm / maxRpm) * 100, 100);
   const isFlashing = rpm >= flashingRpm;
-  const isNearRedline = rpm >= flashingRpm * 0.9;
   
-  // arc path for the gauge
+  // Gauge configuration
   const centerX = 200;
-  const centerY = 140;
-  const radius = 120;
-  const strokeWidth = 16;
-  const normalizedPercentage = percentage / 100;
+  const centerY = 160;
+  const radius = 100;
+  const strokeWidth = 18;
   
-  // wide arc span: from -135° to +135° (270° total instead of 180°)
+  // Arc spans from -135° to +135° (270° total)
   const startAngle = -135;
   const endAngle = 135;
   const totalAngleSpan = endAngle - startAngle;
-  const angle = startAngle + (normalizedPercentage * totalAngleSpan);
   
-  const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
-    const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+  // Calculate current angle based on RPM percentage
+  const currentAngle = startAngle + (percentage / 100) * totalAngleSpan;
+  const redlineAngle = startAngle + ((flashingRpm / maxRpm) * totalAngleSpan);
+  
+  // Dynamic color based on RPM percentage (matches StandardDisplay)
+  const getColor = (percent: number) => {
+    let hue;
+    if (percent < 50) {
+      // Blue to Green (210 -> 120)
+      hue = 210 - ((percent / 50) * 90);
+    } else if (percent < 75) {
+      // Green to Yellow (120 -> 60)
+      hue = 120 - ((percent - 50) / 25) * 60;
+    } else {
+      // Yellow to Red (60 -> 0)
+      hue = 60 - ((percent - 75) / 25) * 60;
+    }
+    return `hsl(${hue}, 90%, 50%)`;
+  };
+  
+  const color = isFlashing ? '#ef4444' : getColor(percentage);
+  
+  // Helper to convert angle to x,y coordinates
+  const getPoint = (angle: number, r: number = radius) => {
+    const rad = ((angle - 90) * Math.PI) / 180;
     return {
-      x: centerX + (radius * Math.cos(angleInRadians)),
-      y: centerY + (radius * Math.sin(angleInRadians))
+      x: centerX + r * Math.cos(rad),
+      y: centerY + r * Math.sin(rad)
     };
   };
   
-  const arc = (x: number, y: number, radius: number, startAngle: number, endAngle: number) => {
-    const start = polarToCartesian(x, y, radius, endAngle);
-    const end = polarToCartesian(x, y, radius, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-    return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
-  };
-  
-  // gradient stops for smooth color transition
-  const getGradientColor = () => {
-    if (isFlashing) return "#ef4444"; // red
-    if (isNearRedline) return "#f59e0b"; // amber
-    if (percentage > 60) return "#3b82f6"; // blue
-    return "#06b6d4"; // cyan
+  // Create arc path
+  const createArc = (start: number, end: number, r: number = radius) => {
+    const startPoint = getPoint(start, r);
+    const endPoint = getPoint(end, r);
+    const largeArc = end - start > 180 ? 1 : 0;
+    return `M ${startPoint.x} ${startPoint.y} A ${r} ${r} 0 ${largeArc} 1 ${endPoint.x} ${endPoint.y}`;
   };
   
   return (
-    <div className="w-full relative" style={{ height: '180px' }}>
+    <div className="w-full relative" style={{ height: '240px' }}>
       <svg 
         width="100%" 
         height="100%" 
-        viewBox="0 0 400 180"
+        viewBox="0 0 400 240"
         preserveAspectRatio="xMidYMid meet"
-        className="overflow-visible"
       >
-        <defs>
-          <linearGradient id="rpmGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.9" />
-            <stop offset="40%" stopColor="#3b82f6" />
-            <stop offset="70%" stopColor="#f59e0b" />
-            <stop offset="85%" stopColor="#f97316" />
-            <stop offset="100%" stopColor="#ef4444" />
-          </linearGradient>
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-            <feMerge>
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-          <filter id="redlineGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
-            <feMerge>
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-       
         {/* Background track */}
         <path
-          d={arc(centerX, centerY, radius, startAngle, endAngle)}
+          d={createArc(startAngle, endAngle)}
           fill="none"
           stroke="#1e293b"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
-        {/* Redline zone background */}
+        {/* Redline zone */}
         {flashingRpm < maxRpm && (
           <path
-            d={arc(centerX, centerY, radius, startAngle + ((flashingRpm / maxRpm) * totalAngleSpan), endAngle)}
+            d={createArc(redlineAngle, endAngle)}
             fill="none"
             stroke="#7f1d1d"
             strokeWidth={strokeWidth}
             strokeLinecap="round"
-            opacity="0.4"
+            opacity="0.5"
           />
         )}
         
-        {/* Main gauge arc */}
+        {/* Active arc */}
         <path
-          d={arc(centerX, centerY, radius, startAngle, angle)}
+          d={createArc(startAngle, currentAngle)}
           fill="none"
-          stroke="url(#rpmGradient)"
+          stroke={color}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
-          filter={isFlashing ? "url(#redlineGlow)" : "url(#glow)"}
-          className={isFlashing ? "animate-pulse" : "transition-all duration-100"}
-        />
+        >
+          {isFlashing && (
+            <animate
+              attributeName="stroke"
+              values="hsl(0, 84%, 60%);hsl(181, 100%, 56%);hsl(0, 84%, 60%)"
+              dur="0.2s"
+              repeatCount="indefinite"
+            />
+          )}
+        </path>
         
-        {/* Tick marks */}
-        {(() => {
-          const generateTickMarks = (maxRpm: number) => {
-            const ticks: number[] = [];
-            
-            // start with 0
-            ticks.push(0);
-            
-            // add ticks for every 1000 RPM up to the nearest thousand below maxRpm
-            const maxThousands = Math.floor(maxRpm / 1000);
-            for (let i = 1; i <= maxThousands; i++) {
-              ticks.push(i * 1000);
-            }
-            
-            // if maxRpm is not exactly on a thousand mark, add maxRpm as final tick
-            if (maxRpm % 1000 !== 0) {
-              ticks.push(maxRpm);
-            }
-            
-            return ticks;
-          };
+        {/* Tick marks every 1000 RPM */}
+        {Array.from({ length: Math.floor(maxRpm / 1000) + 1 }).map((_, i) => {
+          const value = i * 1000;
+          const angle = startAngle + ((value / maxRpm) * totalAngleSpan);
+          const isRed = value >= flashingRpm;
+          const inner = getPoint(angle, radius - strokeWidth / 2 - 3);
+          const outer = getPoint(angle, radius - strokeWidth / 2 - 12);
           
-          return generateTickMarks(maxRpm).map((value, i) => {
-            const tickAngle = startAngle + ((value / maxRpm) * totalAngleSpan);
-            const innerRadius = radius - 25;
-            const outerRadius = radius - 8;
-            const inner = polarToCartesian(centerX, centerY, innerRadius, tickAngle);
-            const outer = polarToCartesian(centerX, centerY, outerRadius, tickAngle);
-            
-            // Redline ticks are thicker and red
-            const isRedline = value >= flashingRpm;
-            
-            return (
-              <line
-                key={value}
-                x1={inner.x}
-                y1={inner.y}
-                x2={outer.x}
-                y2={outer.y}
-                stroke={isRedline ? "#ef4444" : "#64748b"}
-                strokeWidth={isRedline ? "4" : "3"}
-                opacity={isRedline ? "0.9" : "0.7"}
-              />
-            );
-          });
-        })()}
-        
-        {/* Minor tick marks (500 RPM intervals) */}
-        {(() => {
-          const minorTicks: number[] = [];
-          for (let i = 500; i < maxRpm; i += 1000) {
-            minorTicks.push(i);
-          }
-          
-          return minorTicks.map((value) => {
-            const tickAngle = startAngle + ((value / maxRpm) * totalAngleSpan);
-            const innerRadius = radius - 18;
-            const outerRadius = radius - 10;
-            const inner = polarToCartesian(centerX, centerY, innerRadius, tickAngle);
-            const outer = polarToCartesian(centerX, centerY, outerRadius, tickAngle);
-            
-            return (
-              <line
-                key={value}
-                x1={inner.x}
-                y1={inner.y}
-                x2={outer.x}
-                y2={outer.y}
-                stroke="#64748b"
-                strokeWidth="2"
-                opacity="0.4"
-              />
-            );
-          });
-        })()}
+          return (
+            <line
+              key={value}
+              x1={inner.x}
+              y1={inner.y}
+              x2={outer.x}
+              y2={outer.y}
+              stroke={isRed ? '#ef4444' : '#64748b'}
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+          );
+        })}
         
         {/* Center dot */}
         <circle
           cx={centerX}
           cy={centerY}
-          r="4"
-          fill="#64748b"
+          r="5"
+          fill="#334155"
         />
         
-        {/* RPM needle */}
+        {/* Needle */}
         <line
           x1={centerX}
           y1={centerY}
-          x2={polarToCartesian(centerX, centerY, radius - 30, angle).x}
-          y2={polarToCartesian(centerX, centerY, radius - 30, angle).y}
-          stroke={getGradientColor()}
+          x2={getPoint(currentAngle, radius - 25).x}
+          y2={getPoint(currentAngle, radius - 25).y}
+          stroke={color}
           strokeWidth="3"
           strokeLinecap="round"
-          filter="url(#glow)"
-          className="transition-all duration-100"
-        />
+        >
+          {isFlashing && (
+            <animate
+              attributeName="stroke"
+              values="hsl(0, 84%, 60%);hsl(181, 100%, 56%);hsl(0, 84%, 60%)"
+              dur="0.2s"
+              repeatCount="indefinite"
+            />
+          )}
+        </line>
       </svg>
       
-      {/* Digital RPM display */}
-      <div className="absolute inset-0 flex items-center justify-center" style={{ top: '40px' }}>
-        <div className="text-center bg-black bg-opacity-60 rounded-lg px-4 py-2 backdrop-blur-sm border border-gray-700">
-          <div className="text-3xl font-bold tabular-nums font-mono" style={{ color: getGradientColor() }}>
+      {/* Digital display */}
+      <div className="absolute inset-0 flex items-center justify-center pt-6">
+        <div className="bg-black bg-opacity-80 rounded-lg px-5 py-2 border border-gray-700">
+          <div 
+            className="text-3xl font-bold tabular-nums"
+            style={{ color }}
+          >
             {Math.round(rpm).toLocaleString()}
           </div>
-          <div className="text-xs text-gray-400 mt-1 tracking-wider">RPM</div>
+          <div className="text-xs text-gray-400 text-center">RPM</div>
         </div>
       </div>
     </div>
