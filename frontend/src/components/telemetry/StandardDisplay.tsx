@@ -184,7 +184,7 @@ const TireTemp = ({ position, temp }: { position: string, temp: number }) => {
     return (
         <div className="flex flex-col items-center">
             <div
-                className={`w-20 h-32 rounded-lg flex items-center justify-center transition-colors transition-all duration-300 ease-in-out border-2`}
+                className={`w-20 h-32 rounded-lg flex items-center justify-center duration-300 ease-in-out border-2`}
                 // FOR REF: transition used to be from 0% to 50% to 100%, removed gradient for consistency with rest of UI
                 style={{
                     background: `linear-gradient(to bottom,

@@ -64,18 +64,17 @@ const RPMGauge = ({ rpm, maxRpm, flashingRpm }: { rpm: number; maxRpm: number; f
   const currentAngle = startAngle + (percentage / 100) * totalAngleSpan;
   const redlineAngle = startAngle + ((flashingRpm / maxRpm) * totalAngleSpan);
   
-  // Dynamic color based on RPM percentage (matches StandardDisplay)
   const getColor = (percent: number) => {
     let hue;
-    if (percent < 50) {
+    if (percent < 30) {
       // Blue to Green (210 -> 120)
-      hue = 210 - ((percent / 50) * 90);
-    } else if (percent < 75) {
+      hue = 210 - ((percent / 40) * 90);
+    } else if (percent < 50) {
       // Green to Yellow (120 -> 60)
-      hue = 120 - ((percent - 50) / 25) * 60;
+      hue = 120 - ((percent - 40) / 20) * 60;
     } else {
-      // Yellow to Red (60 -> 0)
-      hue = 60 - ((percent - 75) / 25) * 60;
+      // Yellow to Red (60 -> 0) - starts earlier for more prominent red zone
+      hue = 60 - ((percent - 60) / 40) * 60;
     }
     return `hsl(${hue}, 90%, 50%)`;
   };
@@ -657,7 +656,7 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
                 <span className="text-xs text-tt-text-secondary w-12">THR</span>
                 <div className="flex-1 h-4 bg-tt-gray-800 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-tt-green-500 transition-all duration-100"
+                    className="h-full bg-tt-blue-500"
                     style={{ width: `${throttlePercent}%` }}
                   />
                 </div>
@@ -667,7 +666,7 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
                 <span className="text-xs text-tt-text-secondary w-12">BRK</span>
                 <div className="flex-1 h-4 bg-tt-gray-800 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-tt-red-500 transition-all duration-100"
+                    className="h-full bg-tt-red-500"
                     style={{ width: `${brakePercent}%` }}
                   />
                 </div>
@@ -857,7 +856,7 @@ const TelemetryDisplay = ({ data, isDevMode = false }: TelemetryDisplayProps) =>
             <div className="space-y-3">
               <div className="relative h-12 bg-tt-gray-800 rounded-lg overflow-hidden">
                 <div 
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-tt-red-500 to-tt-blue-400 transition-all duration-300"
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-tt-red-500 to-tt-blue-400" 
                   style={{ width: `${data.fuel_percentage}%` }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
