@@ -38,6 +38,19 @@ const TyreTemperatures = ({ temps }: TyreTempsProps) => {
         return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     };
 
+    // function to determine text color based on background lightness
+    const getTextColor = (temp: number): string => {
+        const baseLightness = 45;
+        
+        // lighter backgrounds (yellow/green range), use dark text
+        // darker backgrounds (blue/red range), use light text
+        if (temp >= 60 && temp < 100) {
+            return '#000000';
+        } else {
+            return '#FFFFFF';
+        }
+    };
+
     const TyreTemp = ({ temp, position }: {temp: number, position: string}) => (
         <div className="flex flex-col items-center space-y-1">
             <div 
@@ -56,7 +69,12 @@ const TyreTemperatures = ({ temps }: TyreTempsProps) => {
                 transition: 'all 500ms ease-in-out',
             }}
             >
-                <div className="text-tt-text-primary text-2xl font-bold">{temp.toFixed(1)}°</div>
+                <div 
+                    className="text-2xl font-bold"
+                    style={{ color: getTextColor(temp) }}
+                >
+                    {temp.toFixed(1)}°
+                </div>
             </div>
             <span className="text-sm font-medium text-tt-text-secondary">{position}</span>
         </div>
