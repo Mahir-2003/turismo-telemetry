@@ -3,7 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import ConnectionForm from '@/components/telemetry/ConnectionForm';
 import TelemetryDisplay from '@/components/telemetry/TelemetryDisplay';
 import StandardDisplay from '@/components/telemetry/StandardDisplay';
-import RacingDisplay from '@/components/telemetry/RacingDisplay';
+import CompactDisplay from '@/components/telemetry/CompactDisplay';
+import AdvancedDisplay from '@/components/telemetry/AdvancedDisplay';
 import { WebSocketConnection } from '@/lib/websocket';
 import { TelemetryPacket } from '@/types/telemetry';
 import { useTheme } from '@/context/ThemeProvider';
@@ -20,6 +21,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDevMode, setIsDevMode] = useState(false);
   const [mockDataActive, setMockDataActive] = useState(false);
+  const [selectedDisplay, setSelectedDisplay] = useState<'standard' | 'advanced' | 'compact' | 'basic'>('advanced');
 
   // get theme context
   const { mode } = useTheme();
@@ -178,10 +180,31 @@ return (
         isLoading={isLoading}
         isDevMode={isDevMode}
       />
-      
-      <TelemetryDisplay data={telemetryData} isDevMode={isDevMode} />
-      {/* <StandardDisplay data={telemetryData} isDevMode={isDevMode} /> */}
-      {/* <RacingDisplay data={telemetryData}/> */}
+
+      {/* telemetry display selector */}
+      <div className="flex justify-center mb-4">
+        <div className="bg-tt-bg-card rounded-lg p-4 shadow-lg">
+          <label htmlFor="display-select" className="text-sm font-medium text-tt-text-secondary mr-3">
+            Display Mode:
+          </label>
+          <select
+            id="display-select"
+            value={selectedDisplay}
+            onChange={(e) => setSelectedDisplay(e.target.value as 'standard' | 'advanced' | 'compact' | 'basic')}
+            className="bg-tt-bg-dark text-tt-text-primary border border-tt-bg-accent rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-tt-blue-500 cursor-pointer"
+          >
+            <option value="advanced">Advanced Display</option>
+            <option value="standard">Standard Display</option>
+            <option value="compact">Compact Display</option>
+            <option value="basic">Basic Display</option>
+          </select>
+        </div>
+      </div>
+
+      {selectedDisplay === 'advanced' && <AdvancedDisplay data={telemetryData} />}
+      {selectedDisplay === 'standard' && <StandardDisplay data={telemetryData} isDevMode={isDevMode} />}
+      {selectedDisplay === 'compact' && <CompactDisplay data={telemetryData} />}
+      {selectedDisplay === 'basic' && <TelemetryDisplay data={telemetryData} />}
     </main>
   );
 }
