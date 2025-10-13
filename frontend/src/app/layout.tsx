@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Turismo Telemetry",
   description: "A Gran Turismo 7 Dashboard",
+  icons: {
+    icon: '/TurismoTelemetry-Color-WhiteText.svg',
+  },
 };
 
 export default function RootLayout({
