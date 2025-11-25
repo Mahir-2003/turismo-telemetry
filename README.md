@@ -8,11 +8,18 @@ A real-time telemetry dashboard for Gran Turismo 7, featuring multiple display m
 
 ## Demonstration Video
 
-Watch a [demonstration video](https://youtu.be/nR9Hvjo_gmk) of Turismo Telemetry in action!
+Watch a [demonstration video](https://youtu.be/ukzR3IApOjI) of Turismo Telemetry in action!
 
 ## Screenshots
 
-<img src="docs/images/dashboard1.png" width="400" alt="Dashboard Overview in Time Trial"/><img src="docs/images/dashboard3.png" width="400" alt="Dashboard Overview in Race 1"/><img src="docs/images/dashboard2.png" width="400" alt="Dashboard Overview in Race 2"/>
+<img width="1724" height="962" alt="image" src="https://github.com/user-attachments/assets/1f0d8e74-c714-413e-bd5d-362825f3209a" />
+
+<img width="1305" height="850" alt="image" src="https://github.com/user-attachments/assets/8b2f972c-d827-44dd-b1ee-3c78cea9aad1" />
+
+<img width="1725" height="960" alt="image" src="https://github.com/user-attachments/assets/00ab5277-b668-4744-a7aa-3c9916452007" />
+
+
+
 
 ## Features
 
