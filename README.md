@@ -39,9 +39,9 @@ Watch a [demonstration video](https://youtu.be/nR9Hvjo_gmk) of Turismo Telemetry
 
 ## Prerequisites
 
-- **Node.js** 18 or higher
-- **Python** 3.8 or higher
-- **Gran Turismo 7** on PS4/PS5
+- **Node.js** 18.18 or higher
+- **Python** 3.10 or higher
+- **Gran Turismo 7** on PS4/PS5 *(optional - see [Try Without a PlayStation](#try-without-a-playstation))*
 - **Network**: Device on same network as PlayStation
 
 ## Installation & Setup
@@ -59,8 +59,12 @@ npm install
 ```
 
 ### 3. Backend Setup
+Create and activate a Python virtual environment first (this avoids "externally-managed-environment" errors from `pip`):
+
 ```bash
 cd backend
+python3 -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -69,6 +73,7 @@ pip install -r requirements.txt
 **Terminal 1 - Backend:**
 ```bash
 cd backend
+source venv/bin/activate        # Windows: venv\Scripts\activate
 python main.py
 ```
 The backend will start on `http://localhost:8000`
@@ -81,7 +86,28 @@ npm run dev
 The frontend will start on `http://localhost:3000`
 
 ### 5. Open Dashboard
-Navigate to `http://localhost:3000` in your browser
+Navigate to `http://localhost:3000` in your browser.
+
+To confirm the backend is up, open `http://localhost:8000/health` - it should return `{"status":"healthy", ...}`.
+
+> **Note:** The frontend currently connects to the backend at a hardcoded `ws://localhost:8000/ws/telemetry` (see [websocket.ts](frontend/src/lib/websocket.ts)). This means the dashboard must be opened on the same machine that runs the backend (e.g. opening it from your phone won't work yet). Making this configurable is a work in progress.
+
+### Optional: Backend Configuration
+The backend runs fine with its defaults. To override them (port, log level, etc.), create a `backend/.env` file, for example:
+```
+PORT=8000
+LOG_LEVEL=DEBUG
+```
+Note that changing `PORT` also requires updating the hardcoded URL above.
+
+## Try Without a PlayStation
+
+No PS4/PS5 or Gran Turismo 7? You can still try the dashboard with simulated data. **The backend is not needed for this** - only the frontend:
+
+1. Start the frontend (`cd frontend && npm run dev`) and open `http://localhost:3000`.
+2. Click the **Dev Mode** toggle (beaker icon, top-right of the page).
+3. Click **Connect** (no IP address needed). Mock telemetry will start streaming, and a set of dev controls will appear so you can adjust the simulated values.
+4. Use the display mode selector to switch between the Advanced, Standard, Compact and Basic displays.
 
 ## Usage
 
@@ -91,13 +117,15 @@ Navigate to `http://localhost:3000` in your browser
    - On your PlayStation, go to: **Settings → Network → View Connection Settings**
    - Note the **IPv4 Address** (e.g., 192.168.1.100)
 
-2. **Launch Gran Turismo 7**:
-   - Start any driving session (race, time trial, etc.)
+2. **Launch Gran Turismo 7 and start driving**:
+   - You must be in an active driving session menu (race, time trial, etc.). GT7 only sends telemetry while a player car is driving - nothing is sent from the start menus or the garage , so the dashboard will stay empty until you've chosen a track and have the 'Start Race' option available.
 
 3. **Connect in Dashboard**:
    - Enter your PlayStation's IP address in the connection form
    - Click **Connect**
-   - Telemetry data will begin streaming in real-time
+   - Telemetry data will begin streaming in real-time. You'll know it's working when the dashboard's values (speed, RPM, gear, etc.) update live as you drive.
+
+> **Note:** The app has so far only been tested with a single dashboard connected to the game at a time.
 
 ### Project Structure
 ```
@@ -132,11 +160,12 @@ turismo-telemetry/
 - Ensure PlayStation and computer are on the same network
 - Verify IP address is correct
 - Check that Gran Turismo 7 is actively running (in a session)
-- Confirm firewall isn't blocking UDP ports 33739/33740
+- Allow the backend through your computer's firewall: the backend receives telemetry on **inbound UDP port 33740** (it sends a keep-alive to the PlayStation on UDP 33739). On macOS and Windows you'll usually get a prompt the first time the backend runs - click **Allow**. If you dismissed it, add an inbound rule for Python (or UDP 33740) in your firewall settings.
+- GT7 only sends data while you're driving on track, not in menus
 
 ### Backend Not Starting
-- Verify Python 3.8+ is installed: `python --version`
-- Ensure all dependencies are installed: `pip install -r backend/requirements.txt`
+- Verify Python 3.10+ is installed: `python3 --version`
+- Make sure your virtual environment is activated, then install dependencies from the `backend` folder: `pip install -r requirements.txt`
 - Check that port 8000 is not in use
 
 ## Contributing
