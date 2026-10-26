@@ -1,6 +1,4 @@
 from pydantic_settings import BaseSettings
-from pathlib import Path
-import sys
 
 
 class Settings(BaseSettings):
@@ -24,9 +22,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 
-
-# Create logs directory if it doesn't exist
-Path("../logs").mkdir(exist_ok=True)
 
 # Create and export settings
 settings = Settings()
